@@ -1,0 +1,20 @@
+{
+  "name": "scala-cli",
+  "argv": [
+    "/Users/christosdemetriou/Library/Application Support/Coursier/bin/.scala-cli.aux",
+    "bsp",
+    "--json-options",
+    "/Users/christosdemetriou/projects/iterative-voting-code/.scala-build/ide-options-v2.json",
+    "--json-launcher-options",
+    "/Users/christosdemetriou/projects/iterative-voting-code/.scala-build/ide-launcher-options.json",
+    "--envs-file",
+    "/Users/christosdemetriou/projects/iterative-voting-code/.scala-build/ide-envs.json",
+    "/Users/christosdemetriou/projects/iterative-voting-code"
+  ],
+  "version": "1.8.3",
+  "bspVersion": "2.1.1",
+  "languages": [
+    "scala",
+    "java"
+  ]
+}
