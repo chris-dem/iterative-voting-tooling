@@ -1,6 +1,5 @@
 package iv
 
-import iv.POrder
 import munit.FunSuite
 import munit.ScalaCheckSuite
 import org.scalacheck.Gen
@@ -18,7 +17,7 @@ class POrderTSuite extends FunSuite with ScalaCheckSuite {
     test("Sequential order should pass") {
         val ord = POrder.create(0 until 10)
         assert(
-          ord.voterPref == (0 until 10).toVector,
+          ord.prefToVoter == (0 until 10).toVector,
           "Should not affect the elements"
         )
     }
@@ -27,10 +26,47 @@ class POrderTSuite extends FunSuite with ScalaCheckSuite {
         forAll(genPerm) { (n, pref) =>
             val ord = POrder.create(pref)
             all(
-              ord.voterPref.length == pref.length,
-              pref.zip(ord.voterPref).map(_ == _).reduce(_ && _)
+              ord.prefToVoter.length == pref.length,
+              pref.zip(ord.prefToVoter).map(_ == _).reduce(_ && _)
             )
         }
+
+    def genPermWithOrder: Gen[(Int, Seq[Int], Int, Int)] = for {
+        n <- Gen.choose(10, 100)
+        perm = Random.shuffle((0 until n).toSeq)
+        i <- Gen.choose(0, n - 2)
+        j <- Gen.choose(i + 1, n - 1)
+    } yield (n, perm, i, j)
+
+    property("Orders should match between the two vectors") =
+        forAll(genPermWithOrder) { (n, pref, i, j) =>
+            val ord = POrder.create(pref)
+            val comp1 = ord.compare(i, j)
+            val comp2 = (
+              ord.prefToVoter.find(_ == i),
+              ord.prefToVoter.find(_ == j),
+              comp1
+            ).match {
+                case (Some(indI), Some(indJ), p) => {
+                    if (p > 0) {
+                        assert(
+                          indI < indJ,
+                          s"Candidate $i and candidate $j  are in positions $indI , $indJ"
+                        )
+
+                    } else {
+                        assert(
+                          indI < indJ,
+                          s"Candidate $i and candidate $j  are in positions $indI , $indJ"
+                        )
+                    }
+                    true
+                }
+                case (_, _, _) => false
+
+            }
+        }
+
     test("Out of range number elements should fail") {
         intercept[IllegalArgumentException](POrder.create(Seq(0, 10)))
     }
