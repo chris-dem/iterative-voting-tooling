@@ -8,6 +8,4 @@ import org.scalacheck.Prop.all
 import scala.util.Random
 import scala.util.Try
 
-class STVotingTSuite extends FunSuite with ScalaCheckSuite {
-
-}
+class STVotingTSuite extends FunSuite with ScalaCheckSuite {}

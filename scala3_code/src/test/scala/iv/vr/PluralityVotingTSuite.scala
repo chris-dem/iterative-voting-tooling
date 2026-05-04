@@ -52,7 +52,7 @@ class PluralityVotingTSuite extends FunSuite with ScalaCheckSuite {
             val winner = p
                 .map(_.prefToVoter.last)
                 .groupMapReduce(x => x)(_ => 1)(_ + _)
-                .maxBy(a => (a._2, a._1))
+                .maxBy(a => a.swap)
                 ._1
             val state = IVNode.create(p, None)
             val win = PluralityVoting().calculateWinner(state)
@@ -60,6 +60,68 @@ class PluralityVotingTSuite extends FunSuite with ScalaCheckSuite {
               winner == win,
               s"Winner ${winner} should match the candidate with the most top votes: (${winner}, ${win})"
             )
+        }
+    }
+
+    def generateWeights =
+        for {
+            w1 <- Gen.choose(50, 100)
+            w2 <- Gen.choose(2, 10)
+            w3 <- Gen.choose(2, 10)
+            pref1 = POrder.create(Random.shuffle(Vector(1, 2)).appended(0))
+            pref2 = POrder.create(Random.shuffle(Vector(0, 1, 2)))
+            pref3 = POrder.create(Random.shuffle(Vector(0, 1, 2)))
+        } yield (w1, w2, w3, pref1, pref2, pref3)
+
+    property(
+      "Candidate with highest score wins. Weights on voters. Assume lex ordering"
+    ) = forAll(generateWeights) { (w1, w2, w3, p1, p2, p3) =>
+        {
+            val state =
+                IVNode.create(
+                  Vector(p1, p2, p3),
+                  Some(Vector(w1, w2, w3), Vector.fill(3)(1))
+                )
+            val win = PluralityVoting().calculateWinner(state)
+            assert(
+              win == 0
+            )
+        }
+    }
+
+    property(
+      "Candidate with highest score wins. Weights on candidates. Assume lex ordering"
+    ) = forAll(generateWeights) { (w1, w2, w3, p1, p2, p3) =>
+        {
+            val state =
+                IVNode.create(
+                  Vector(p1, p2, p3),
+                  Some(Vector.fill(3)(1), Vector(w1, w2, w3))
+                )
+            val win = PluralityVoting().calculateWinner(state)
+            assert(
+              win == 0
+            )
+        }
+    }
+
+    property(
+      "For all outputs, weight max match the winner and the two methods match"
+    ) = forAll(generateVotingPrefs(10, 5)) { (p) =>
+        {
+            val state =
+                IVNode.create(p, None)
+            val ptv = PluralityVoting()
+            val win = ptv.calculateWinner(state)
+            val win2 = ptv.calculateWinnerWithLogger(state).run
+            assert(
+              win == win2._2
+            )
+            assert(
+              win2._1.zipWithIndex.max._2 == win,
+              s"Current weight vector is ${win2}"
+            )
+
         }
     }
 }

@@ -3,9 +3,11 @@ package iv.vr
 import scala.collection.mutable.ArrayBuffer
 import iv.IVNode
 import iv.vr.VotingRule
+import cats.data.Writer
 
 final class PluralityVoting extends VotingRule {
-    def calculateWinner(state: IVNode): Int = {
+    type L = (Vector[Float])
+    def calculateWinnerWithLogger(state: IVNode): Writer[Vector[Float], Int] = {
         val wSums = state.weightsV
             .zip(state.voter_preferences)
             .foldRight(state.weightsC)((vp, acc) => {
@@ -13,7 +15,7 @@ final class PluralityVoting extends VotingRule {
                 acc.updated(pf.prefToVoter.last, acc(pf.prefToVoter.last) + w)
             })
         val highest = wSums.max
-        wSums.zipWithIndex.findLast(_._1 == highest).get._2
+        Writer(wSums, wSums.zipWithIndex.findLast(_._1 == highest).get._2)
     }
 
 }
