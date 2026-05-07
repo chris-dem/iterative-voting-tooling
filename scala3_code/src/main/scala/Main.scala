@@ -1,1 +1,3 @@
- 
+def initState = ???
+
+@main def main : Unit = ???

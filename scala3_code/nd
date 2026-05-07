@@ -37,28 +37,26 @@ class STVotingTSuite extends FunSuite with ScalaCheckSuite {
         assert(
           logs(0) == LoggedItem(
             0,
-            Map((0, 1), (1, 1), (2, 1), (3, 3)),
+            Map((0, 2), (1, 1), (2, 1), (3, 3)),
             Vector((3, 3), (2, 2), (0, 2), (1, 1))
           ),
-          s"Check first round state1. Current log ${logs(0)}"
+          "Check first round states"
         )
         assert(
           logs(1) == LoggedItem(
             1,
             Map((1, 1), (2, 2), (3, 3)),
-            Vector((3, 3), (2, 2), (2, 2), (1, 2))
+            Vector((3, 3), (2, 2), (1, 2), (1, 2))
           ),
-          s"Check second round states. Current log ${logs(1)}"
-        )
-        val exp = LoggedItem(
-          2,
-          Map((2, 3), (3, 3)),
-          Vector((3, 3), (2, 3), (2, 3), (2, 3))
+          "Check first round states"
         )
         assert(
-          logs(2) == exp,
-          s"Check third round states. Current log:${logs(2)}\nExpected: ${exp}"
+          logs(2) == LoggedItem(
+            1,
+            Map((2, 2), (3, 3)),
+            Vector((3, 3), (2, 3), (2, 3), (2, 3))
+          ),
+          "Check first round states"
         )
     }
-
 }

@@ -47,15 +47,16 @@ final class STVoting extends VotingRule {
                     val lostC = w.minBy(_.swap)._1
                     val newBool = bools.updated(lostC, true)
                     val newPrefs =
-                        prefs.map(c =>
-                            c.reverse.dropWhile(p => bools(p)).reverse
-                        )
+                        prefs
+                            .map(c =>
+                                c.reverse.dropWhile(p => newBool(p)).reverse
+                            )
                     Writer(
                       Vector(
                         LoggedItem(
                           lostC,
                           w,
-                          prefs.last.zip(newPrefs.map(_.last)).toVector
+                          prefs.map(_.last).zip(newPrefs.map(_.last)).toVector
                         )
                       ),
                       AccType(newBool, newPrefs)
