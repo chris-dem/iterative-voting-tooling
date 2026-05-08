@@ -8,3 +8,11 @@ name = "IterativeVotingCycles"
 name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.30.0-rc2"
+
+[[require]]
+name = "«doc-gen4»"
+git = "https://github.com/leanprover/doc-gen4"
+rev = "main"
+
+[docGen]
+enabled = true

@@ -1,87 +1,84 @@
-import Mathlib
-import Mathlib.Data.Fin.Basic
-import Mathlib.Data.ZMod.Basic
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Nat.Basic
-import Mathlib.Algebra.BigOperators.Fin
-
-open Classical
-open BigOperators
-
-
-
-
-def finAdd  {n: ℕ} [NeZero n](pad : Fin n): Fin n -> Fin n :=
-    Fin.add pad
-
-lemma add_less_n_less_succ {a p n : ℕ} [NeZero n] (h: p < n): p + (a *n)  < (Nat.succ a) * n := by
-  rw [Nat.succ_mul, Nat.add_comm]
-  apply Nat.add_lt_add_left h
-
-def ModZdd  {n : ℕ} [NeZero n] (pad : ℕ) (k : ZMod n) : ZMod n := 
-  let padZ : ZMod n := pad
-  k + padZ
-
--- lemma ModZInjective {n: ℕ} ModAddInj: 
-
-lemma ModZInjective {n : ℕ} [NeZero n] :
-    ∀ pad, Function.Injective (ModZdd (n := n) pad) := by
-  intro pad x y h
-  simp [ModZdd] at h
-  exact h
-  
-
-lemma ModZSurjective {n : ℕ} [NeZero n] :
-    ∀ pad, Function.Surjective (ModZdd (n := n) pad) := by
-      intro m x
-      let i  := x - m
-      use i
-      rw [ModZdd]
-      dsimp [i]
-      simp
-
-theorem ModAddBijective {n : ℕ} [NeZero n]: ∀pad, Function.Bijective (ModZdd (n := n) pad) := by
-  intro p
-  constructor
-  apply ModZInjective
-  apply ModZSurjective
-
-
-theorem fin_add_eq_mod_add {n: ℕ} [NeZero n] (pad a: Fin n):
-    (finAdd (n := n) pad a).val = (ModZdd pad  (a.val: ZMod n)).val := by
-  simp [finAdd, ModZdd, Fin.add,ZMod.val_add, Nat.add_comm]
-  
-
-
-
-theorem fin_add_bij {n : ℕ} [NeZero n] : ∀ pad,  Function.Bijective  (finAdd pad (n := n)) := by
-  intro p
-  constructor
-  /- Injective direction -/
-  intro x y h
-  apply Fin.eq_of_val_eq
-  have  hval : (finAdd p x).val  = (finAdd p y).val := by
-      simpa using congrArg Fin.val h
-  rw [fin_add_eq_mod_add p x, fin_add_eq_mod_add p y] at hval
-  have heq : ModZdd ↑p (x : ZMod n) = ModZdd ↑p (y : ZMod n) := by
-    apply ZMod.val_injective at hval
-    exact hval
-  have hzy : (x : ZMod n) = (y : ZMod n) :=
-    ModZInjective p.val heq
-  have hv := congr_arg ZMod.val hzy
-  rwa [ZMod.val_cast_of_lt x.isLt, ZMod.val_cast_of_lt y.isLt] at hv
-  /- Surjective direction -/
-  intro x
-  let i := x - p
-  use i
-  apply Fin.eq_of_val_eq
-  simp [finAdd, Fin.add]
-  dsimp [i]
-  simp [Fin.val_sub]
-  rw [← Nat.add_assoc, ← Nat.add_sub_assoc, Nat.add_comm, Nat.add_comm p.val]
-  rw [Nat.add_sub_assoc, Nat.sub_self, Nat.add_zero,← Nat.add_mod_mod, Nat.mod_self, Nat.add_zero]
-  apply Nat.mod_eq_of_lt x.isLt
-  apply Nat.le_refl
-  apply Nat.le_of_lt p.isLt
-
-
+-- import Mathlib
+-- import Mathlib.Data.Fin.Basic
+-- import Mathlib.Data.ZMod.Basic
+-- import Mathlib.Data.Finset.Basic
+-- import Mathlib.Data.Nat.Basic
+-- import Mathlib.Algebra.BigOperators.Fin
+-- 
+-- open Classical
+-- open BigOperators
+-- 
+-- 
+-- def finAdd  {n: ℕ} [NeZero n](pad : Fin n): Fin n -> Fin n :=
+--     Fin.add pad
+-- 
+-- lemma add_less_n_less_succ {a p n : ℕ} [NeZero n] (h: p < n): p + (a *n)  < (Nat.succ a) * n := by
+--   rw [Nat.succ_mul, Nat.add_comm]
+--   apply Nat.add_lt_add_left h
+-- 
+-- def ModZdd  {n : ℕ} [NeZero n] (pad : ℕ) (k : ZMod n) : ZMod n := 
+--   let padZ : ZMod n := pad
+--   k + padZ
+-- 
+-- -- lemma ModZInjective {n: ℕ} ModAddInj: 
+-- 
+-- lemma ModZInjective {n : ℕ} [NeZero n] :
+--     ∀ pad, Function.Injective (ModZdd (n := n) pad) := by
+--   intro pad x y h
+--   simp [ModZdd] at h
+--   exact h
+--   
+-- 
+-- lemma ModZSurjective {n : ℕ} [NeZero n] :
+--     ∀ pad, Function.Surjective (ModZdd (n := n) pad) := by
+--       intro m x
+--       let i  := x - m
+--       use i
+--       rw [ModZdd]
+--       dsimp [i]
+--       simp
+-- 
+-- theorem ModAddBijective {n : ℕ} [NeZero n]: ∀pad, Function.Bijective (ModZdd (n := n) pad) := by
+--   intro p
+--   constructor
+--   apply ModZInjective
+--   apply ModZSurjective
+-- 
+-- 
+-- theorem fin_add_eq_mod_add {n: ℕ} [NeZero n] (pad a: Fin n):
+--     (finAdd (n := n) pad a).val = (ModZdd pad  (a.val: ZMod n)).val := by
+--   simp [finAdd, ModZdd, Fin.add,ZMod.val_add, Nat.add_comm]
+--   
+-- 
+-- 
+-- theorem fin_add_bij {n : ℕ} [NeZero n] : ∀ pad,  Function.Bijective  (finAdd pad (n := n)) := by
+--   intro p
+--   constructor
+--   /- Injective direction -/
+--   intro x y h
+--   apply Fin.eq_of_val_eq
+--   have  hval : (finAdd p x).val  = (finAdd p y).val := by
+--       simpa using congrArg Fin.val h
+--   rw [fin_add_eq_mod_add p x, fin_add_eq_mod_add p y] at hval
+--   have heq : ModZdd ↑p (x : ZMod n) = ModZdd ↑p (y : ZMod n) := by
+--     apply ZMod.val_injective at hval
+--     exact hval
+--   have hzy : (x : ZMod n) = (y : ZMod n) :=
+--     ModZInjective p.val heq
+--   have hv := congr_arg ZMod.val hzy
+--   rwa [ZMod.val_cast_of_lt x.isLt, ZMod.val_cast_of_lt y.isLt] at hv
+--   /- Surjective direction -/
+--   intro x
+--   let i := x - p
+--   use i
+--   apply Fin.eq_of_val_eq
+--   simp [finAdd, Fin.add]
+--   dsimp [i]
+--   simp [Fin.val_sub]
+--   rw [← Nat.add_assoc, ← Nat.add_sub_assoc, Nat.add_comm, Nat.add_comm p.val]
+--   rw [Nat.add_sub_assoc, Nat.sub_self, Nat.add_zero,← Nat.add_mod_mod, Nat.mod_self, Nat.add_zero]
+--   apply Nat.mod_eq_of_lt x.isLt
+--   apply Nat.le_refl
+--   apply Nat.le_of_lt p.isLt
+-- 
+-- 
