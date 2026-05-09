@@ -6,42 +6,13 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Nat.Basic
 import Mathlib.Data.Vector.Basic
 import Mathlib.Algebra.BigOperators.Fin
+import IterativeVotingCycles.MiscVotingLemmas
 
 open Classical
 open BigOperators
 
 
 variable {n m : ℕ} [NeZero n] [NeZero m]
-
-abbrev Voter (n : ℕ) := Fin n
-abbrev Cand (m : ℕ) := Fin m
-
-
-/-- A ranking is a linear order encoded via a position function -/
-structure Ranking (m: ℕ) [NeZero m]  where
-  pos : Cand m → Cand m
-  bij : Function.Bijective pos
-
-
-abbrev WeightType := ℕ
-
-structure VoterProfile (m : ℕ) [NeZero m] where
-  preference : Ranking m
-  weight : WeightType
-
-abbrev Profile (n m : ℕ) [NeZero n] [NeZero m] := Voter n → VoterProfile m
-abbrev CandW (m : ℕ) [NeZero m] := Cand m → WeightType
-abbrev VVote (n m : ℕ) [NeZero n] [NeZero m] := Voter n → Cand m
-
-def prefers (r : Ranking m) (a b : Cand m) : Prop :=
-  r.pos a < r.pos b
-
-instance (r : Ranking m) (a b : Cand m) :
-    Decidable (prefers r a b) := by
-  unfold prefers
-  infer_instance
-  
-
 
 /-- Count how many voters rank c at the top (position = 0) -/
 def pluralityScore (P : Profile n m) (C: CandW m) (V : VVote n m) (c : Cand m) : WeightType :=
@@ -97,29 +68,6 @@ instance (P : Profile n m) (C : CandW m) (V V' : VVote n m) :
   unfold beneficialStep prefers
   infer_instance
 
-def next {k : ℕ} (i : Fin k) (h: 1 < k): Fin k := 
-    let op : Fin k := ⟨1, h⟩ 
-    i.add op
-
-def isCycle (k : ℕ) (h : 1 < k) (P : Profile n m)  (C: CandW m) (f: Fin k → VVote n m) : Prop :=
-  ∀ i : Fin k, beneficialStep P C (f i) (f (next i h) )
-
-
-instance  (k  : ℕ) (h : 1< k)(P : Profile n m) (C : CandW m) (f: Fin k ->  VVote n m) :
-    Decidable (isCycle k h P C f) := by
-  unfold isCycle beneficialStep prefers
-  infer_instance
-
-
-
-def existsCycle : Prop :=
-  ∃ (k : ℕ) (_ : k ≥ 2) (P : Profile n m) (C: CandW m) (f : Fin k → VVote n m),
-    isCycle k (by omega) P C f
-
-
---- Cycle construction
-
-abbrev VectorPref := Vector Int 4
 
 def toFunc {α: Type} {k : ℕ} (vc: Vector α k) : Fin k -> α :=  Vector.get vc
 
@@ -156,6 +104,33 @@ macro_rules
     `(tactic| intro i j h; fin_cases i <;> fin_cases j <;> simp_all [Vector.get])
 
 
+
+section SingleAction
+def next {k : ℕ} (i : Fin k) (h: 1 < k): Fin k := 
+    let op : Fin k := ⟨1, h⟩ 
+    i.add op
+
+def isCycle (k : ℕ) (h : 1 < k) (P : Profile n m)  (C: CandW m) (f: Fin k → VVote n m) : Prop :=
+  ∀ i : Fin k, beneficialStep P C (f i) (f (next i h) )
+
+
+instance  (k  : ℕ) (h : 1< k)(P : Profile n m) (C : CandW m) (f: Fin k ->  VVote n m) :
+    Decidable (isCycle k h P C f) := by
+  unfold isCycle beneficialStep prefers
+  infer_instance
+
+
+
+def existsCycle : Prop :=
+  ∃ (k : ℕ) (_ : k ≥ 2) (P : Profile n m) (C: CandW m) (f : Fin k → VVote n m),
+    isCycle k (by omega) P C f
+
+
+--- Cycle construction
+
+abbrev VectorPref := Vector Int 4
+
+
 def voters: Profile 3 4 := toFunc (Vector.ofFn ![
     ⟨rankingFromVector (Vector.ofFn ![0, 1, 3, 2]) (by proveUnique), 1⟩,
     ⟨rankingFromVector (Vector.ofFn ![1, 3, 2, 0]) (by proveUnique), 2⟩,
@@ -176,3 +151,36 @@ def voterCycle: Fin 6 -> VVote 3 4 := toFunc (Vector.ofFn ![
 example : isCycle 6 (by omega) voters weights voterCycle := by
   native_decide
 
+end SingleAction
+
+section GroupAction
+
+def groupbeneficialStepWith (P: Profile n m) (C: CandW m) (V V' : VVote n m) (A: Finset (Fin n))
+    : Prop :=
+    A.Nonempty ∧
+    (∀ u ∉ A, V u = V' u) ∧
+    (∀ u ∈ A, prefers (P u).preference (lexWinner P C V) (lexWinner P C V'))
+
+instance (P : Profile n m) (C : CandW m) (V V' : VVote n m) (A: Finset (Fin n)):
+    Decidable (groupbeneficialStepWith P C V V' A) := by
+  unfold groupbeneficialStepWith prefers
+  infer_instance
+
+-- Theorem statement
+def groupbeneficialStep (P: Profile n m) (C: CandW m) (V V' : VVote n m)
+    : Prop :=
+  ∃ A : Finset (Fin n),
+    groupbeneficialStepWith P C V V' A
+
+instance (P : Profile n m) (C : CandW m) (V V' : VVote n m) :
+    Decidable (groupbeneficialStep P C V V') := by
+  unfold groupbeneficialStep groupbeneficialStepWith
+  infer_instance
+
+def isStableState (P: Profile n m) (C: CandW m) (V: VVote n m) : Prop :=
+  ∀ V': VVote n m, ¬ (groupbeneficialStep P C V V')
+
+def isCondorcetWinner  (P: Profile n m) (C: CandW m) (V: VVote n m) (c : CandW m)
+  : Prop := sorry
+
+end GroupAction
