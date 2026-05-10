@@ -8,11 +8,13 @@ structure NonEmptyFinset (α : Type*) where
   val : Finset α
   nonempty : val.Nonempty
 
+/-- Tie-break by choosing the lex-smallest winner (F;in m has a natural linear order). -/
+def NonEmptyFinset.lexMin {m : ℕ} (s : NonEmptyFinset (Cand m)) (L: LinearOrder (Fin m)) : Cand m :=
+  s.val.min' s.nonempty
+
+
+abbrev CandW  (m : ℕ) [NeZero m]:= Cand m -> WeightType
 
 class VotingRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] (L: LinearOrder (Fin m)) where
-  winners : VoterProfile m → BallotProfile Ballot n → NonEmptyFinset (Cand m)
-  
-  winner (VP: VoterProfile m) (BP: BallotProfile Ballot n): Cand m:= 
-    let winset := winners VP BP
-    let v := winset.val
-    @Finset.min' _ L v winset.nonempty
+  winners : Profile n m -> CandW m -> BallotProfile Ballot n → NonEmptyFinset (Cand m)
+  winner (P: Profile n m)  (CW : CandW m) (BP: BallotProfile Ballot n): Cand m:=  (winners P CW BP).lexMin L

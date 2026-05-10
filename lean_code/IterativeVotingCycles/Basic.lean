@@ -11,12 +11,20 @@ structure Ranking (m: ℕ) [NeZero m]  where
   pos : Cand m → Cand m
   bij : Function.Bijective pos
 
-
 abbrev WeightType := ℕ
 
 structure VoterProfile (m : ℕ) [NeZero m] where
   preference : Ranking m
+  weight: WeightType := 1
 
 
+abbrev Profile (n m : ℕ) [NeZero n]  [NeZero m] := Voter n -> VoterProfile m
 
+def prefers (r : Ranking m) (a b : Cand m) : Prop :=
+  r.pos a < r.pos b
+
+instance (r : Ranking m) (a b : Cand m) :
+    Decidable (prefers r a b) := by
+  unfold prefers
+  infer_instance
 

@@ -6,7 +6,6 @@ abbrev BallotProfile (Ballot: Type) (n: ℕ) [NeZero n]:=
 abbrev CandidateBallot (m: ℕ) [NeZero m] := Cand m
 abbrev RankingBallot (m : ℕ) [NeZero m] := Ranking m
 
-
 abbrev CandidateVotes (n m : ℕ) [NeZero n] [NeZero m]:=
   BallotProfile (CandidateBallot m) n
 
