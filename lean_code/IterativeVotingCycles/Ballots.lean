@@ -1,7 +1,5 @@
 import IterativeVotingCycles.Basic
 
-
-
 abbrev BallotProfile (Ballot: Type) (n: ℕ) [NeZero n]:=
   Voter n -> Ballot
 

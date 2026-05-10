@@ -14,11 +14,6 @@ variable {n m : ℕ} [NeZero n] [NeZero m]
 
 
 abbrev WeightType := ℕ
-
-structure VoterProfile (m : ℕ) [NeZero m] where
-  preference : Ranking m
-  weight : WeightType
-
 abbrev Profile (n m : ℕ) [NeZero n] [NeZero m] := Voter n → VoterProfile m
 abbrev CandW (m : ℕ) [NeZero m] := Cand m → WeightType
 abbrev VVote (n m : ℕ) [NeZero n] [NeZero m] := Voter n → Cand m

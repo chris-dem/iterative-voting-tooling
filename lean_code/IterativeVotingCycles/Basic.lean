@@ -12,3 +12,11 @@ structure Ranking (m: ℕ) [NeZero m]  where
   bij : Function.Bijective pos
 
 
+abbrev WeightType := ℕ
+
+structure VoterProfile (m : ℕ) [NeZero m] where
+  preference : Ranking m
+
+
+
+
