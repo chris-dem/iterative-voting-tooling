@@ -15,8 +15,8 @@ variable {n m: ℕ} [NeZero n] [NeZero m]
 -- ────────────────────────────────────────────────
 
 def scoreWinners {Ballot : Type}
-    (score : Profile n m -> CandW m -> BallotProfile Ballot n → Cand m → WeightType)
-    (P     : Profile n m)
+    (score : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType)
+    (P     : VoterW n)
     (CW    : CandW m)
     (BP    : BallotProfile Ballot n) : NonEmptyFinset (Cand m) :=
   let isWin c := ∀ d : Cand m, score P CW BP d ≤ score P CW BP c
@@ -34,7 +34,7 @@ def scoreWinners {Ballot : Type}
 /-- Assigns a numeric score to each candidate from submitted ballots alone.
     No voter-weight information; suitable for unweighted rules. -/
 class ScoringRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] (L: LinearOrder (Fin m)) where
-  candScore : Profile n m -> CandW m -> BallotProfile Ballot n → Cand m → WeightType
+  candScore : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType
 
 instance (priority := 100) instVotingRuleOfScoring
     [sr : ScoringRule Ballot n m L] : VotingRule Ballot n m L where

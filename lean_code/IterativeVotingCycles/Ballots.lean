@@ -11,3 +11,5 @@ abbrev CandidateVotes (n m : ℕ) [NeZero n] [NeZero m]:=
 
 abbrev RankingVotes (n m : ℕ) [NeZero n] [NeZero m]:=
   BallotProfile (RankingBallot m) n
+
+

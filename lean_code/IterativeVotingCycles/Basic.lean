@@ -15,7 +15,6 @@ abbrev WeightType := ℕ
 
 structure VoterProfile (m : ℕ) [NeZero m] where
   preference : Ranking m
-  weight: WeightType := 1
 
 
 abbrev Profile (n m : ℕ) [NeZero n]  [NeZero m] := Voter n -> VoterProfile m
