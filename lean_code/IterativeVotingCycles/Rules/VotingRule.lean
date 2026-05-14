@@ -23,10 +23,19 @@ class VotingRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] (L: LinearOrd
   winners : VoterW n -> CandW m -> BallotProfile Ballot n → NonEmptyFinset (Cand m)
   winner (P: VoterW n)  (CW : CandW m) (BP: BallotProfile Ballot n): Cand m:=  (winners P CW BP).lexMin L
 
-def candRelativePreference {n m : ℕ} [NeZero n] [NeZero m] (P : Profile n m) (bx : Cand m) (bb: Cand m) : ℕ :=
-   Finset.univ.filter (fun (n :Voter n) => prefers ((P n).preference) bx bb) |> Finset.card
+def candRelativePreference {n m : ℕ} [NeZero n] [NeZero m] (P : RankingVotes n m) (ba : Cand m) (bb: Cand m) : ℕ :=
+  Finset.univ.filter (fun (p :Voter n) => prefers (P p) ba bb) |> Finset.card
 
-def condorcetWinner (P : Profile n m)  (b: Cand m): Prop :=
-  ∀ p : Cand m, p ≠ b → (candRelativePreference P b p) > n/2
+def condorcetWinner (P : RankingVotes n m)  (b: Cand m): Prop :=
+  ∀ p : Cand m, p ≠ b → (candRelativePreference P p b) > n/2
 
--- def condorcetConsistentVR (P : Profile n m) := sorry
+instance (P: RankingVotes n m) (b : Cand m) :
+    Decidable (condorcetWinner P b) := by
+  unfold condorcetWinner
+  infer_instance
+
+
+def condorcetConsistentVR (f: BallotProfile (RankingBallot  m) n -> Cand m) (P : RankingVotes n m): Prop 
+  :=
+    ∃ c : Cand m, condorcetWinner P c ↔  f P = c
+

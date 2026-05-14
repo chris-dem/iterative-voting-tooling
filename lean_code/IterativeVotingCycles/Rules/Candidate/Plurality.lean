@@ -36,11 +36,18 @@ def pluralityVoting (L: LinearOrder (Fin m)) (P:  VoterW n)
         P C ballot
 
 
+def unweightedPluralityScore (L: LinearOrder (Fin m)) 
+  (ballot : BallotProfile (CandidateBallot m) n) (c : Cand m) : WeightType :=
+    pluralityScore L (fun _ => 1) (fun _ => 1) ballot c
+
+def unweightedPluralityVoting (L: LinearOrder (Fin m)) 
+  (ballot : BallotProfile (CandidateBallot m) n)  : Cand m :=
+    pluralityVoting L (fun _ => 1) (fun _ => 1) ballot
+
 end PV
 
+
 section PluralityExample
-
-
 private def dummyRanking : Ranking 2 :=
   { pos := id, bij := Function.bijective_id }
 

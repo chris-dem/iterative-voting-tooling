@@ -18,6 +18,7 @@ structure VoterProfile (m : ℕ) [NeZero m] where
 
 
 abbrev Profile (n m : ℕ) [NeZero n]  [NeZero m] := Voter n -> VoterProfile m
+abbrev VProfile (n m : ℕ) [NeZero n]  [NeZero m] := Voter n -> Ranking m
 
 def prefers (r : Ranking m) (a b : Cand m) : Prop :=
   r.pos a < r.pos b
