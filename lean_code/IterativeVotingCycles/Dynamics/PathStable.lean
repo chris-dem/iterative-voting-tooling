@@ -133,9 +133,24 @@ theorem unweighted_pv_condorcet_iff_stable (P : Profile n m) (L : LinearOrder (C
               have hpp := hO1 V'
               exact hVnew hpp
               -- 2 <=
-
-
-
+              have hn1: ∃ p : Cand (mq + 2),  p ≠ c ∧ PV.unweightedPluralityVoting L V' = p := by
+                have had2 : ∃ q, PV.unweightedPluralityVoting L V'  = q := by
+                  refine ⟨ PV.unweightedPluralityVoting L V', rfl ⟩ 
+                obtain ⟨q, hqE⟩ := had2
+                use q
+                constructor
+                rw [hqE] at hVnew
+                exact hVnew
+                exact hqE
+              obtain ⟨ q, hq, hnn⟩ := hn1
+              have hqQ := hp q hq
+              rw [hnn] at hpf
+              simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
+              scoreWinners, NonEmptyFinset.lexMin, ScoringRule.candScore] at hnn
+              have hVA: ∀ v, (v ∈ A → V' v = q)  ∧  (v ∉ A → V' v = c) := by
+                intro v
+                constructor
+                intro hp
 
 
 
