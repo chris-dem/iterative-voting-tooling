@@ -39,7 +39,7 @@ def groupbeneficialStepWith (P: Profile n m) (VR: BallotProfile Ballot n -> Fin 
   (V V' : BallotProfile Ballot n) (A: Finset (Fin n))
     : Prop :=
     A.Nonempty ∧
-    (∀ u ∉ A, V u = V' u) ∧
+    (∀ u, u ∈ A ↔ V u ≠ V' u) ∧
     (∀ u ∈ A, prefers (P u).preference (VR V) (VR V'))
 
 instance (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m)

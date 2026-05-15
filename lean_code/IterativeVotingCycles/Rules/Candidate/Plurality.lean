@@ -38,11 +38,11 @@ def pluralityVoting (L: LinearOrder (Fin m)) (P:  VoterW n)
 
 def unweightedPluralityScore (L: LinearOrder (Fin m)) 
   (ballot : BallotProfile (CandidateBallot m) n) (c : Cand m) : WeightType :=
-    pluralityScore L (fun _ => 1) (fun _ => 1) ballot c
+    pluralityScore L (fun _ => 1) (fun _ => 0) ballot c
 
 def unweightedPluralityVoting (L: LinearOrder (Fin m)) 
   (ballot : BallotProfile (CandidateBallot m) n)  : Cand m :=
-    pluralityVoting L (fun _ => 1) (fun _ => 1) ballot
+    pluralityVoting L (fun _ => 1) (fun _ => 0) ballot
 
 end PV
 

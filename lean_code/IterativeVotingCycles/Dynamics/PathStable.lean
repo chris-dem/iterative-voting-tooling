@@ -131,7 +131,7 @@ theorem unweighted_pv_condorcet_iff_stable (P : Profile n m) (L : LinearOrder (C
                 rw [← hpQ1, hLvp] at hVnew
                 exact absurd rfl hVnew
               have hpp := hO1 V'
-              exact hVnew hpp
+              exact absurd hpp hVnew 
               -- 2 <=
               have hn1: ∃ p : Cand (mq + 2),  p ≠ c ∧ PV.unweightedPluralityVoting L V' = p := by
                 have had2 : ∃ q, PV.unweightedPluralityVoting L V'  = q := by
@@ -144,20 +144,88 @@ theorem unweighted_pv_condorcet_iff_stable (P : Profile n m) (L : LinearOrder (C
                 exact hqE
               obtain ⟨ q, hq, hnn⟩ := hn1
               have hqQ := hp q hq
-              rw [hnn] at hpf
-              simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-              scoreWinners, NonEmptyFinset.lexMin, ScoringRule.candScore] at hnn
-              have hVA: ∀ v, (v ∈ A → V' v = q)  ∧  (v ∉ A → V' v = c) := by
-                intro v
-                constructor
-                intro hp
+              have hAllEqC : ∀ v,  ((¬ v = c) →  PV.unweightedPluralityScore L vp v = 0)
+                  ∧ ((v = c) →  PV.unweightedPluralityScore L vp v = n) := by
+                    intro v
+                    constructor
+                    intro h
+                    simp [PV.unweightedPluralityScore,PV.pluralityScore, ScoringRule.candScore]
+                    intro x
+                    intro hmm2
+                    simp [vp, toFunc, Vector.get] at hmm2
+                    symm at hmm2
+                    exact h hmm2
+                    intro h
+                    simp [PV.unweightedPluralityScore,PV.pluralityScore, ScoringRule.candScore
+                    ,hvpF]
+                    symm at h
+                    simp [h]
+              have hAllEqCq : PV.unweightedPluralityScore L vp q = 0 := by
+                have h1 := hAllEqC q
+                simp [h1.left hq]
+              have hAllEqCc : PV.unweightedPluralityScore L vp c = n := by
+                have h1 := hAllEqC c
+                simp [h1.right]
+
+              have hPVV'c : PV.unweightedPluralityScore L V' c ≤ PV.unweightedPluralityScore L V' q 
+                := by
+                  simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
+                  scoreWinners,NonEmptyFinset.lexMin, ScoringRule.candScore, Finset.min'_eq_iff] 
+                    at hnn
+                  simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
+                  exact hnn.left c
+              have hV'cScore : PV.unweightedPluralityScore L V' c = n - A.card  := by
+                simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
+                rw [← Finset.filter_union_filter_neg_eq (fun v => v ∈ A) ({v | V' v = c})]
+                rw [Finset.card_union_of_disjoint (s:= {v ∈ {v | V' v = c} | v ∈ A}) 
+                          (t := {v ∈ {v | V' v = c} | v ∉ A})]
+                rw [Finset.filter_filter, Finset.filter_filter]
+                have  hinA : ¬ (Finset.univ.filter (fun a => V' a = c ∧ a ∈ A)).Nonempty  := by
+                  simp
+                  intro x hx
+                  have hb := (hnnA x).mp
+                  by_contra hneg
+                  have h1b := hb hneg
+                  rw [ ← hvpF x] at hx
+                  symm at hx
+                  exact absurd hx h1b
+                rw [Finset.not_nonempty_iff_eq_empty] at hinA
+                rw [hinA, Finset.card_empty,zero_add]
+                have  hinA2 : (Finset.univ.filter (fun a => V' a = c ∧ a ∉ A)) = (Finset.univ.filter (fun a => a ∉ A))  := by
+                  ext g
+                  constructor
+                  intro hgg
+                  simp at  hgg
+                  simp
+                  exact hgg.right
+                  intro hgg
+                  simp at  hgg
+                  simp
+                  constructor
+                  apply (hnnA g).not.mp at hgg
+                  simp at hgg
+                  rw [← hgg]
+                  exact hvpF g
+                  exact hgg
+                have h := Finset.card_compl A
+                simp at h
+                rw [← h, hinA2]
+                rw [show ({a | a ∉ A} : Finset (Fin n)) = Aᶜ by
+                  ext a <;> simp] 
+                
 
 
 
 
 
+                -- apply congrArg Finset.card  at hinA
+                -- rw [hinA]
 
-  
+
+
+                sorry
+
+
 end PluralityStableState
 
 section PluralityBordaTheorem
