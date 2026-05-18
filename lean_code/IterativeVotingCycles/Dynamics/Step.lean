@@ -34,27 +34,18 @@ instance (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotPr
   infer_instance
 
 
+def deviators
+  (V V' : BallotProfile Ballot n) : Finset (Fin n) :=
+  Finset.univ.filter (fun u => V u ≠ V' u)
 
-def groupbeneficialStepWith (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m)
-  (V V' : BallotProfile Ballot n) (A: Finset (Fin n))
-    : Prop :=
-    A.Nonempty ∧
-    (∀ u, u ∈ A ↔ V u ≠ V' u) ∧
-    (∀ u ∈ A, prefers (P u).preference (VR V) (VR V'))
-
-instance (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m)
-  (V V' : BallotProfile Ballot n) (A: Finset (Fin n)):
-    Decidable (groupbeneficialStepWith P VR V V' A) := by
-  unfold groupbeneficialStepWith prefers
-  infer_instance
 
 -- Theorem statement
 def groupbeneficialStep (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotProfile Ballot n)
     : Prop :=
-  ∃ A : Finset (Fin n),
-    groupbeneficialStepWith P VR V V' A
+    let A := deviators V V'
+    A.Nonempty ∧ (∀ u ∈ A , prefers (P u).preference (VR V) (VR V'))
 
 instance (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotProfile Ballot n):
     Decidable (groupbeneficialStep P VR V V') := by
-  unfold groupbeneficialStep groupbeneficialStepWith
+  unfold groupbeneficialStep deviators
   infer_instance
