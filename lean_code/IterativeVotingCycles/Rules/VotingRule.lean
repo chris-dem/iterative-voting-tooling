@@ -29,11 +29,13 @@ def candRelativePreference {n m : ℕ} [NeZero n] [NeZero m] (P : RankingVotes n
 def condorcetWinner (P : RankingVotes n m)  (b: Cand m): Prop :=
   ∀ p : Cand m, p ≠ b → (candRelativePreference P p b) > n/2
 
+def weakCondorcetWinner (P : RankingVotes n m) (b : Cand m):= 
+  ∀ p : Cand m, p ≠ b → (candRelativePreference P p b) ≥ n/2
+
 instance (P: RankingVotes n m) (b : Cand m) :
     Decidable (condorcetWinner P b) := by
   unfold condorcetWinner
   infer_instance
-
 
 def condorcetConsistentVR (f: BallotProfile (RankingBallot  m) n -> Cand m) (P : RankingVotes n m): Prop 
   :=

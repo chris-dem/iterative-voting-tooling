@@ -84,7 +84,7 @@ theorem condorcet_unique (P : RankingVotes n m) (c₁ c₂ : Cand m)
   sorry
 
 
-lemma unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOrder (Cand m)) :
+theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOrder (Cand m)) :
     ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c → 
       (∃ VP, isStableState P (PV.unweightedPluralityVoting L) VP) := by
@@ -323,7 +323,7 @@ lemma unweighted_score_closure (L : LinearOrder (Cand m)) (V: CandidateVotes n  
   simp [Finset.sum_card_fiberwise_eq_card_filter]
 
 
-lemma unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : LinearOrder (Cand m)):
+theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : LinearOrder (Cand m)):
   ∀ c : Cand m, 
         condorcetWinner (fun v => (P v).preference) c →
               (∀ VP : CandidateVotes n m, isStableState P (PV.unweightedPluralityVoting L) VP -> 
@@ -488,19 +488,30 @@ lemma unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : Li
     exact hDiv.left
 
 
-theorem unweighted_pv_condorcet_iff_stable (P : Profile n m) (L : LinearOrder (Cand m)) :
-    ∀ c : Cand m, 
-      condorcetWinner (fun v => (P v).preference) c ↔ 
-      (∃ VP, isStableState P (PV.unweightedPluralityVoting L) VP) ∧ 
-            (∀ VP : CandidateVotes n m, isStableState P (PV.unweightedPluralityVoting L) VP -> 
-              PV.unweightedPluralityVoting L VP = c) := by
-intro c
-constructor
-intro hp
-constructor
-exact unweighted_pv_condorcet_imp_exist_stable P  L c hp
-exact unweighted_pv_condorcet_imp_all_stable_cond_wins P  L c hp
-sorry
+theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m))
+  (VP : CandidateVotes n m) (h : Odd n) :
+          isStableState P (PV.unweightedPluralityVoting L) VP →
+      ∃ c, condorcetWinner (fun v => (P v).preference) c ∧  PV.unweightedPluralityVoting L VP = c
+      := by
+      sorry
+
+theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m) (L : LinearOrder (Cand m))
+  (h : Odd n) :
+          (∀ VP , isStableState P (PV.unweightedPluralityVoting L) VP →
+           condorcetWinner (VoterProfile.preference ∘ P)  (PV.unweightedPluralityVoting L VP))
+           := by
+      sorry
+
+
+
+theorem unweighted_stable_n_is_even_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m)) -- TODO: Investigate the theorems accuracy
+  (VP : CandidateVotes n m) (h : Even n) :
+          isStableState P (PV.unweightedPluralityVoting L) VP →
+      ∃ c, condorcetWinner (VoterProfile.preference ∘ P) c ∨ 
+      ∀ d, (weakCondorcetWinner (VoterProfile.preference ∘ P) c ∧ L.lt c d) := by
+      sorry
+
+
 
 
 #reduce (∀ P, ∀ L, ∀ c : Cand m, 
