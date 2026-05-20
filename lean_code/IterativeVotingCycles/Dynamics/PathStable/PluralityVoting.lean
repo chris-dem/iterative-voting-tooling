@@ -14,6 +14,7 @@ import IterativeVotingCycles.Rules.ScoringRule
 import IterativeVotingCycles.Rules.Candidate.Plurality
 import IterativeVotingCycles.Misc
 import IterativeVotingCycles.Dynamics.Step
+import IterativeVotingCycles.Dynamics.PathStable.Basic
 
 open Classical
 open BigOperators
@@ -21,20 +22,6 @@ open Fin
 
 variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot] [Fintype Ballot]
-
-def isStableState (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V: BallotProfile Ballot n) : Prop :=
-  ∀ V', ¬ (groupbeneficialStep P VR V V')
-
-instance (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
-  (V: BallotProfile Ballot n) :
-    Decidable (isStableState P VR V) := by
-  unfold isStableState groupbeneficialStep prefers
-  infer_instance
-
-
-
-
-section PluralityStableState
 
 section PVStableExample
 private def dummyProfile : Profile 5 3:= toFunc (Vector.ofFn ![
@@ -488,12 +475,14 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
     exact hDiv.left
 
 
-theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m))
+theorem unweighted_stable_n_is_odd_imp_csorrsorryyondorcet (P : Profile n m) (L : LinearOrder (Cand m))
   (VP : CandidateVotes n m) (h : Odd n) :
           isStableState P (PV.unweightedPluralityVoting L) VP →
       ∃ c, condorcetWinner (fun v => (P v).preference) c ∧  PV.unweightedPluralityVoting L VP = c
       := by
-      sorry
+      intro hStable
+      rw [isStableState] at hStable
+      use 
 
 theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m) (L : LinearOrder (Cand m))
   (h : Odd n) :
@@ -512,15 +501,10 @@ theorem unweighted_stable_n_is_even_imp_condorcet (P : Profile n m) (L : LinearO
       sorry
 
 
-
-
 #reduce (∀ P, ∀ L, ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c ↔ 
       (∃ VP, isStableState P (PV.unweightedPluralityVoting L) VP) ∧ 
             (∀ VP : CandidateVotes n m, isStableState P (PV.unweightedPluralityVoting L) VP -> 
               PV.unweightedPluralityVoting L VP = c))
 
-end PluralityStableState
 
-section PluralityBordaTheorem
-end PluralityBordaTheorem
