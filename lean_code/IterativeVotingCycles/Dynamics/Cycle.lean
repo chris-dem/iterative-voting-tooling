@@ -18,15 +18,10 @@ open BigOperators
 variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot]
 
-
-private def next {k : ℕ} (i : Fin k) (h: 1 < k): Fin k := 
-    let op : Fin k := ⟨1, h⟩ 
-    i.add op
-
 def isSimpleCycle (k : ℕ) (h : 1 < k) 
     (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) 
     (f: Fin k → BallotProfile Ballot n) : Prop :=
-  ∀ i : Fin k, beneficialStep P VR (f i) (f (next i h) )
+  ∀ i : Fin k, beneficialStep P VR (f i) (f (nextMod i h) )
 
 instance (k  : ℕ) (h : 1< k) (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
   (f: Fin k ->  BallotProfile Ballot n) :

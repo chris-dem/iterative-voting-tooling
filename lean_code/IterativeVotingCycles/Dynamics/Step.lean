@@ -49,3 +49,13 @@ instance (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotP
     Decidable (groupbeneficialStep P VR V V') := by
   unfold groupbeneficialStep deviators
   infer_instance
+
+def groupbeneficialDirectStep (P: Profile n m) (VR: CandidateVotes n m -> Fin m) (V V' : CandidateVotes n m)
+    : Prop :=
+    let A := deviators V V'
+    A.Nonempty ∧ (∀ u ∈ A , (prefers (P u).preference (VR V) (VR V') ∧ V' u = VR V'))
+
+instance (P : Profile n m) (VR: CandidateVotes n m -> Fin m) (V V' : CandidateVotes n m):
+    Decidable (groupbeneficialDirectStep P VR V V') := by
+  unfold groupbeneficialDirectStep deviators
+  infer_instance

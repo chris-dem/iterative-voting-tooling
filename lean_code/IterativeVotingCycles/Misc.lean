@@ -47,6 +47,9 @@ macro_rules
     `(tactic| intro i j h; fin_cases i <;> fin_cases j <;> simp_all [Vector.get])
 
 
+def nextMod {k : ℕ} (i : Fin k) (h: 1 < k): Fin k := 
+    let op : Fin k := ⟨1, h⟩ 
+    i.add op
 
 
 theorem Fintype.domain_singleton_all_same {α β : Type*} [Fintype β] (f : α → β) (h : Fintype.card β = 1) :

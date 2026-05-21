@@ -71,6 +71,8 @@ theorem condorcet_unique (P : RankingVotes n m) (c₁ c₂ : Cand m)
   sorry
 
 
+
+
 theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOrder (Cand m)) :
     ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c → 
@@ -476,6 +478,8 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
     exact hDiv.left
 
 
+
+
 theorem unweighted_stable_n_is_odd_imp_csorrsorryyondorcet (P : Profile n m) (L : LinearOrder (Cand m))
   (VP : CandidateVotes n m) (h : Odd n) :
           isStableState P (PV.unweightedPluralityVoting L) VP →
@@ -625,6 +629,18 @@ theorem unweighted_stable_n_is_odd_imp_csorrsorryyondorcet (P : Profile n m) (L 
       simp [deviators, Vnew] at hd
       exact hd.left
 
+theorem cor_unweighted_pv_condorcet_imp_exist_stable_direct (P : Profile n m) (L : LinearOrder (Cand m)) :
+    ∀ c : Cand m, 
+      condorcetWinner (fun v => (P v).preference) c → 
+      (∃ VP, isDirectStableState P (PV.unweightedPluralityVoting L) VP)  := by
+        intro m hp
+        obtain ⟨VP, h2 ⟩  :=  unweighted_pv_condorcet_imp_exist_stable P L m hp
+        have h1 := direct_sub_beneficial P (PV.unweightedPluralityVoting L)
+        simp [Finset.subset_iff] at h1
+        have h11 := h1 h2
+        use VP
+
+
 theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m) (L : LinearOrder (Cand m))
   (h : Odd n) :
           (∀ VP , isStableState P (PV.unweightedPluralityVoting L) VP →
@@ -640,12 +656,5 @@ theorem unweighted_stable_n_is_even_imp_condorcet (P : Profile n m) (L : LinearO
       ∃ c, condorcetWinner (VoterProfile.preference ∘ P) c ∨ 
       ∀ d, (weakCondorcetWinner (VoterProfile.preference ∘ P) c ∧ L.lt c d) := by
       sorry
-
-
-#reduce (∀ P, ∀ L, ∀ c : Cand m, 
-      condorcetWinner (fun v => (P v).preference) c ↔ 
-      (∃ VP, isStableState P (PV.unweightedPluralityVoting L) VP) ∧ 
-            (∀ VP : CandidateVotes n m, isStableState P (PV.unweightedPluralityVoting L) VP -> 
-              PV.unweightedPluralityVoting L VP = c))
 
 
