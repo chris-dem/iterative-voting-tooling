@@ -480,7 +480,7 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
 
 
 
-theorem unweighted_stable_n_is_odd_imp_csorrsorryyondorcet (P : Profile n m) (L : LinearOrder (Cand m))
+theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m))
   (VP : CandidateVotes n m) (h : Odd n) :
           isStableState P (PV.unweightedPluralityVoting L) VP →
       condorcetWinner (fun v => (P v).preference)  (PV.unweightedPluralityVoting L VP)

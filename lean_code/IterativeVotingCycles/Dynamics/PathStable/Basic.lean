@@ -31,15 +31,17 @@ instance (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
   unfold isStableState groupbeneficialStep prefers
   infer_instance
 
+def supFinKPlusOne {k : ℕ} : Fin (k+1) :=
+  Fin.last k
 
+def supFinK {k : ℕ} [NeZero k] : Fin k := by
+  exact ⟨k-1,  (by exact Nat.pred_lt (NeZero.ne k))⟩ 
 
-def supFinK {k : ℕ} [NeZero k] : Fin k :=
-  Finset.univ.max' (Finset.univ_nonempty)
 
 def isPathStableGroup {k : ℕ} [NeZero k]
     (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) 
     (f: Fin k → BallotProfile Ballot n) : Prop :=
-  (∀ i : Fin k, i.succ < k → groupbeneficialStep P VR (f i) (f (i + 1) )) ∧ 
+  (∀ i : Fin k, groupbeneficialStep P VR (f i) (f (i + 1) )) ∧ 
   isStableState P VR (f supFinK)
 
 instance {k  : ℕ} [NeZero k](P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
@@ -48,16 +50,14 @@ instance {k  : ℕ} [NeZero k](P : Profile n m) (VR: BallotProfile Ballot n -> F
   unfold isPathStableGroup
   infer_instance
 
-
-
-def isDirectPathStableGroup {k : ℕ} [NeZero k]
+def isDirectPathStableGroup {k : ℕ} 
     (P : Profile n m) (VR: CandidateVotes n m -> Fin m) 
-    (f: Fin k → CandidateVotes n m) : Prop :=
-  (∀ i : Fin k, i.succ < k → groupbeneficialDirectStep P VR (f i) (f (i + 1) )) ∧ 
+    (f: Fin (k + 1) → CandidateVotes n m) : Prop :=
+  (∀ i : Fin k, groupbeneficialDirectStep P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧ 
   isStableState P VR (f supFinK)
 
-instance {k  : ℕ} [NeZero k](P : Profile n m) (VR: CandidateVotes n m -> Fin m) 
-    (f: Fin k → CandidateVotes n m) :
+instance {k  : ℕ} (P : Profile n m) (VR: CandidateVotes n m -> Fin m) 
+    (f: Fin (k + 1) → CandidateVotes n m) :
     Decidable (isDirectPathStableGroup P VR f) := by
   unfold isDirectPathStableGroup
   infer_instance
