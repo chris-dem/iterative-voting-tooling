@@ -19,7 +19,6 @@ variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot]
 
 
-
 /-- A voter performs a beneficial deviation if they change their ranking
     and strictly prefer the new winner to the old one -/
 def beneficialStep (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotProfile Ballot n)
@@ -59,3 +58,24 @@ instance (P : Profile n m) (VR: CandidateVotes n m -> Fin m) (V V' : CandidateVo
     Decidable (groupbeneficialDirectStep P VR V V') := by
   unfold groupbeneficialDirectStep deviators
   infer_instance
+
+def groupbeneficialDirectRBStep (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m)
+    : Prop :=
+    let A := deviators V V'
+    A.Nonempty ∧ (∀ u ∈ A , (prefers (P u).preference (VR V) (VR V') 
+      ∧ (V' u).pos (VR V') = m - 1 -- Current winner is at the top of the ballot
+      ∧ (V' u).pos (VR V ) = 0 )) -- Previous winner is at the bottom of the deviator ballot
+
+def groupbeneficialTBStep (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m)
+    : Prop :=
+    let A := deviators V V'
+    A.Nonempty ∧ (∀ u ∈ A , (prefers (P u).preference (VR V) (VR V')
+      ∧ (V' u).pos (VR V') = m - 1 -- Current winner is at the top of the ballot
+      ∧ (V' u).pos (VR V ) = 0 )) -- Previous winner is at the bottom of the deviator ballot
+
+
+
+instance (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m):
+    Decidable (groupbeneficialDirectRBStep P VR V V') := by
+  unfold groupbeneficialDirectRBStep deviators
+  infer_instance 

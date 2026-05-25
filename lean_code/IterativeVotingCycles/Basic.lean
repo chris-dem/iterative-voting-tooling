@@ -11,6 +11,12 @@ structure Ranking (m: ℕ) [NeZero m]  where
   pos : Cand m → Cand m
   bij : Function.Bijective pos
 
+instance : DecidableEq (Ranking m) := fun r1 r2 =>
+  if h : ∀ x : Cand m, r1.pos x = r2.pos x then
+    isTrue (by cases r1; cases r2; congr; exact funext h)
+  else
+    isFalse (fun heq => h (fun x => congrFun (congrArg Ranking.pos heq) x))
+
 abbrev WeightType := ℕ
 
 structure VoterProfile (m : ℕ) [NeZero m] where

@@ -56,7 +56,7 @@ private lemma c_is_condorcet: condorcetWinner (VoterProfile.preference ∘ dummy
 
 
 private lemma is_stable_iff_1234_vote_0: 
-    ∀ VP, isStableState dummyProfile (PV.unweightedPluralityVoting linFin') VP ↔ 
+    ∀ VP, isDirectStableState dummyProfile (PV.unweightedPluralityVoting linFin') VP ↔ 
     ∀ i, i < 4 → VP i = 0 := by
   native_decide
 
@@ -707,31 +707,23 @@ private lemma unreachable_from_truth (k : ℕ):
           simp [tstarC] at hM
           fin_cases i <;>  simp at hi <;> simp [hPVatT2,hM, dummyProfile ,rankingFromVector, toFunc, Vector.get, prefers] at hp_div_app_left
       
-      have hcard : (Finset.univ.filter (fun k => f tstarC k = 2)).card ≥ 2 := by
+      have hcard : (Finset.univ.filter (fun k => f t2V3 k = 2)).card ≥ 2 := by
           apply le_trans (b := ({3, 4} : Finset (Fin 5)).card)
           · decide
           · apply Finset.card_le_card
             intro x hx
             simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-            simp [h_side_compl] at hx
-            exact hx
+            have hmqP := h3N x hx
+            exact hmqP
 
       simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
         ScoringRule.candScore,scoreWinners,NonEmptyFinset.lexMin, Finset.min'_eq_iff] at hPVatT2
-      have hL1 := hPVatT2
-
-  
-
-
-
-
-
-
-
-
-
-
-
+      obtain ⟨hvvL , hvvR⟩  := hPVatT2
+      have hvvLExt := fun d => ((hvvL d).trans hmq).trans hcard
+      have hL1 := hvvR 2 hvvLExt
+      haveI:  LinearOrder (Fin 3) := linFin'
+      letI:  LinearOrder (Fin 3) := linFin'
+      exact absurd hL1 (by native_decide)
 
 end ReachabilityCounterExamplePV
 

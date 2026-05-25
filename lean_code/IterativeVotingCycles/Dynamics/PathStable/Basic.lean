@@ -38,23 +38,31 @@ def supFinK {k : ℕ} [NeZero k] : Fin k := by
   exact ⟨k-1,  (by exact Nat.pred_lt (NeZero.ne k))⟩ 
 
 
-def isPathStableGroup {k : ℕ} [NeZero k]
+def isPathStableGroup {k : ℕ} 
     (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) 
-    (f: Fin k → BallotProfile Ballot n) : Prop :=
-  (∀ i : Fin k, groupbeneficialStep P VR (f i) (f (i + 1) )) ∧ 
+    (f: Fin (k + 1) → BallotProfile Ballot n) : Prop :=
+  (∀ i : Fin k, groupbeneficialStep P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧
   isStableState P VR (f supFinK)
 
-instance {k  : ℕ} [NeZero k](P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
-  (f: Fin k ->  BallotProfile Ballot n) :
+instance {k : ℕ} (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m)
+  (f: Fin (k + 1) ->  BallotProfile Ballot n) :
     Decidable (isPathStableGroup P VR f) := by
   unfold isPathStableGroup
+  infer_instance
+
+def isDirectStableState   (P: Profile n m) (VR: CandidateVotes n m -> Fin m) (V: CandidateVotes n m) : Prop := 
+      ∀ V', ¬ (groupbeneficialDirectStep P VR V V')
+
+instance (P: Profile n m) (VR: CandidateVotes n m -> Fin m) (V: CandidateVotes n m):
+    Decidable (isDirectStableState P VR V) := by
+  unfold isDirectStableState
   infer_instance
 
 def isDirectPathStableGroup {k : ℕ} 
     (P : Profile n m) (VR: CandidateVotes n m -> Fin m) 
     (f: Fin (k + 1) → CandidateVotes n m) : Prop :=
   (∀ i : Fin k, groupbeneficialDirectStep P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧ 
-  isStableState P VR (f supFinK)
+  isDirectStableState P VR (f supFinK)
 
 instance {k  : ℕ} (P : Profile n m) (VR: CandidateVotes n m -> Fin m) 
     (f: Fin (k + 1) → CandidateVotes n m) :
@@ -62,14 +70,17 @@ instance {k  : ℕ} (P : Profile n m) (VR: CandidateVotes n m -> Fin m)
   unfold isDirectPathStableGroup
   infer_instance
 
-def existsPathStable : Prop :=
-  ∃ (k : ℕ) (_ : NeZero k) (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) (f: Fin k ->  BallotProfile Ballot n) ,
-   isPathStableGroup  (k := k) P VR f
+def exists_path_stable_beneficial (k : ℕ) (V0 : CandidateVotes n m) : Prop := 
+  ∃ (k' : ℕ) (_ : k' < k) 
+    (P : Profile n m) (VR : CandidateVotes n m → Fin m) 
+    (f : Fin (k' + 1) → CandidateVotes n m),
+    (f 0 = V0) ∧  isDirectPathStableGroup (k := k') P VR f
 
-
-def isDirectStableState   (P: Profile n m) (VR: CandidateVotes n m -> Fin m) (V: CandidateVotes n m) : Prop := 
-      ∀ V', ¬ (groupbeneficialDirectStep P VR V V')
-
+def exists_path_stable_beneficial_and_direct_from_f0 (k : ℕ) (V0 : BallotProfile Ballot n) : Prop := 
+  ∃ (k' : ℕ) (_ : k' < k) 
+    (P : Profile n m) (VR : BallotProfile Ballot n → Fin m)
+    (f : Fin (k' + 1) → BallotProfile Ballot n),
+    (f 0 = V0) ∧  isPathStableGroup (k := k') P VR f
 
 lemma direct_sub_beneficial (P: Profile n m) (VR: CandidateVotes n m -> Fin m): 
     Finset.univ.filter (fun (v : CandidateVotes n m) => isStableState P VR v) ⊆ Finset.univ.filter (fun (v : CandidateVotes n m) => isDirectStableState P VR v)    := by
