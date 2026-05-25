@@ -12,11 +12,11 @@ import IterativeVotingCycles.Ballots
 import IterativeVotingCycles.Rules.VotingRule
 import IterativeVotingCycles.Rules.ScoringRule
 
-open Classical
 open BigOperators
 
 variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot]
+
 
 
 /-- A voter performs a beneficial deviation if they change their ranking
@@ -37,7 +37,6 @@ def deviators
   (V V' : BallotProfile Ballot n) : Finset (Fin n) :=
   Finset.univ.filter (fun u => V u ≠ V' u)
 
-
 -- Theorem statement
 def groupbeneficialStep (P: Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotProfile Ballot n)
     : Prop :=
@@ -48,6 +47,15 @@ instance (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) (V V' : BallotP
     Decidable (groupbeneficialStep P VR V V') := by
   unfold groupbeneficialStep deviators
   infer_instance
+
+
+structure StepDynamic where
+  step : (P: Profile n m) -> (VR: BallotProfile Ballot n -> Fin m) -> (V V' : BallotProfile Ballot n) -> Prop
+  beneficial_prop : ∀ P VR V V', step P VR V V' →  groupbeneficialStep P VR V V'
+
+
+def BeneficialDynamic : StepDynamic (n := n)  (m := m) (Ballot := Ballot):= ⟨groupbeneficialStep, by simp⟩ 
+
 
 def groupbeneficialDirectStep (P: Profile n m) (VR: CandidateVotes n m -> Fin m) (V V' : CandidateVotes n m)
     : Prop :=
@@ -72,7 +80,6 @@ def groupbeneficialTBStep (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V'
     A.Nonempty ∧ (∀ u ∈ A , (prefers (P u).preference (VR V) (VR V')
       ∧ (V' u).pos (VR V') = m - 1 -- Current winner is at the top of the ballot
       ∧ (V' u).pos (VR V ) = 0 )) -- Previous winner is at the bottom of the deviator ballot
-
 
 
 instance (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m):

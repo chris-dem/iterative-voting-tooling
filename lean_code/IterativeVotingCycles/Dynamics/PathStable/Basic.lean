@@ -71,16 +71,14 @@ instance {k  : ℕ} (P : Profile n m) (VR: CandidateVotes n m -> Fin m)
   infer_instance
 
 def exists_path_stable_beneficial (k : ℕ) (V0 : CandidateVotes n m) : Prop := 
-  ∃ (k' : ℕ) (_ : k' < k) 
-    (P : Profile n m) (VR : CandidateVotes n m → Fin m) 
-    (f : Fin (k' + 1) → CandidateVotes n m),
-    (f 0 = V0) ∧  isDirectPathStableGroup (k := k') P VR f
+  ∃ (P : Profile n m) (VR : CandidateVotes n m → Fin m) 
+    (f : Fin (k + 1) → CandidateVotes n m),
+    (f 0 = V0) ∧  isDirectPathStableGroup P VR f
 
 def exists_path_stable_beneficial_and_direct_from_f0 (k : ℕ) (V0 : BallotProfile Ballot n) : Prop := 
-  ∃ (k' : ℕ) (_ : k' < k) 
-    (P : Profile n m) (VR : BallotProfile Ballot n → Fin m)
-    (f : Fin (k' + 1) → BallotProfile Ballot n),
-    (f 0 = V0) ∧  isPathStableGroup (k := k') P VR f
+  ∃ (P : Profile n m) (VR : BallotProfile Ballot n → Fin m)
+    (f : Fin (k + 1) → BallotProfile Ballot n),
+    (f 0 = V0) ∧  isPathStableGroup P VR f
 
 lemma direct_sub_beneficial (P: Profile n m) (VR: CandidateVotes n m -> Fin m): 
     Finset.univ.filter (fun (v : CandidateVotes n m) => isStableState P VR v) ⊆ Finset.univ.filter (fun (v : CandidateVotes n m) => isDirectStableState P VR v)    := by
@@ -95,4 +93,21 @@ lemma direct_sub_beneficial (P: Profile n m) (VR: CandidateVotes n m -> Fin m):
       contrapose! hr
       exact hr.left
 
+
+abbrev DynamicType := (P : Profile n m) ->  (VR: BallotProfile Ballot n -> Fin m) ->
+  (V V' : BallotProfile Ballot n ) -> Prop
+
+
+
+def is_path_stable_general_vr {k : ℕ} 
+    (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) 
+    (f: Fin (k + 1) → BallotProfile Ballot n)
+    (dyn : DynamicType): Prop :=
+  (∀ i : Fin k, Dynamicn P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧ 
+  ∀  P VR (f supFinK)
+
+def exists_path_vr_rule_condition_from_f0 (k : ℕ) (V0 : BallotProfile Ballot n) : Prop := 
+  ∃ (P : Profile n m) (VR : BallotProfile Ballot n → Fin m)
+    (f : Fin (k + 1) → BallotProfile Ballot n),
+    (f 0 = V0) ∧  isPathStableGroup P VR f
 

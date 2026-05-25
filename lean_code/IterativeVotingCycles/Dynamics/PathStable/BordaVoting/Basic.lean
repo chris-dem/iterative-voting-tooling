@@ -23,4 +23,5 @@ open Fin
 variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot] [Fintype Ballot]
 
- 
+
+theorem borda_tb_iff_unweighted_path :
