@@ -550,6 +550,7 @@ private lemma unreachable_from_truth (k : ℕ):
           have hImp : v =4 := by
             simp [deviators] at h_deviators_is_singleton_4
             have hnk := h_deviators_is_singleton_4
+
             have hv : v ∈ deviators (f tstar.castSucc) (f t2V3) := by
               simp [deviators]
               intro hqv
@@ -566,7 +567,161 @@ private lemma unreachable_from_truth (k : ℕ):
       apply (h_0_wins_iff_3 (f t2V3)).mpr at ht2V3
       simp [hPVatT2] at ht2V3
       simp at hcPVu
-      sorry
+      --  For candidate B
+      simp [groupbeneficialDirectStep] at hMid
+
+      obtain ⟨p, hdiv⟩  := (hMid tstar).left
+      have hMidAt2_right :=  ((hMid tstar).right p hdiv).right
+      have hMidAt2 :=  ((hMid tstar).right p hdiv).left
+      simp [tstarC, ← hcPVu, hsucc, hPVatT2, prefers] at hMidAt2
+      -- For candidate c
+      -- Must be the case that at least v3 
+
+      symm at hcPVu
+      have hM := hcPVu
+      simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner, scoreWinners, NonEmptyFinset.lexMin, ScoringRule.candScore,
+        ScoringRule.candScore, Finset.min'_eq_iff] at hcPVu
+      obtain ⟨hdCard, hdCardLe⟩  := hcPVu
+
+      have hcond : ({0,1,2} ⊆ (Finset.univ.filter (fun v => (f tstarC) v =  2))ᶜ) := by
+          intro v hv
+          simp
+          fin_cases hv <;> simp [hNstepV2]
+
+      -- At least 2 voters (v3,v4)
+      have h_must_be_at_least_2 : PV.unweightedPluralityScore linFin' (f tstarC) 2 = 2 := by
+        by_contra h
+        push Not at h
+        apply Nat.ne_iff_lt_or_gt.mp at h
+        simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at h
+        have hp'Tot := unweighted_score_closure linFin' (f tstarC)
+        simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hp'Tot
+        rcases h with hsml | hgt
+        have hp := Finset.sum_le_card_nsmul (Finset.univ) 
+          (fun k => (Finset.univ.filter (fun v => (f tstarC) v = k)).card) 1 (fun k => fun _ => (hdCard k).trans hsml)
+        simp [hp'Tot] at hp
+        have hcond : ({0,1,2} ⊆ (Finset.univ.filter (fun v => (f tstarC) v =  2))ᶜ) := by
+          intro v hv
+          simp
+          fin_cases hv <;> simp [hNstepV2]
+        have hcc := Finset.card_le_card hcond
+        simp only [Finset.card_compl] at hcc
+        simp at hcc
+        omega
+
+      simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at h_must_be_at_least_2
+
+      have hother := Finset.eq_of_subset_of_card_le hcond
+      simp only [Finset.card_compl] at hother
+      simp [h_must_be_at_least_2] at hother
+      have h_side_compl := congr_arg compl hother
+      have h_lean_stuff : ({0,1,2}ᶜ: Finset (Fin 5)) = ({3,4} : Finset (Fin 5)) := by decide
+      simp [h_lean_stuff]  at h_side_compl
+
+      have hMidstar := hMid tstar
+      simp at hM
+      simp [groupbeneficialDirectStep, tstarC, hM, hsucc, hPVatT2] at hMidstar
+      obtain ⟨hl, hr⟩ := hMidstar
+      obtain ⟨v, hv⟩ := hl
+      have hr_with_v := hr v hv
+      by_cases h2_div : 2 ∈ deviators (f tstarC) (f t2V3)
+      have h_div := (hr 2 h2_div).right
+      have hother := ht1R t2V3 h_t1_is_lt_t2
+      simp [h_div] at hother
+      -- not in
+      have hother := ht1R t2V3 h_t1_is_lt_t2
+      simp [deviators,hother] at h2_div
+      have h_divs: Finset.univ.filter (fun k => (f t2V3) k = 1) ⊆ {0,1} := by
+        intro k hk
+        simp
+        by_contra h_cc
+        push Not at h_cc
+        simp at hk
+        fin_cases k  <;> simp at h_cc <;> simp [hother] at hk
+
+        have h3 : f tstarC 3 = 2 := by
+            have : (3 : Fin 5) ∈ ({3, 4} : Finset (Fin 5)) := by decide
+            rw [h_side_compl] at this
+            simpa using this
+        have h3N : f t2V3 3 = 2 := by
+          by_contra hp
+          rw [← h3] at hp
+          have hp_div := hMid tstar
+          simp [groupbeneficialDirectStep, hsucc] at hp_div
+          have h_is_div : 3 ∈ deviators (f tstarC) (f t2V3) := by 
+            simp [deviators] 
+            intro hkl
+            symm at hkl
+            exact hp hkl
+          have hp_div_app := (hp_div.right 3 h_is_div) 
+          have hp_div_app_left := hp_div_app.left
+          have hp_div_app_right := hp_div_app.right
+          rw [hk] at hp_div_app_right
+          simp [tstarC] at hM
+          simp [← hp_div_app_right, hM, dummyProfile ,rankingFromVector, toFunc, Vector.get, prefers] at hp_div_app_left
+        simp [h3N] at hk
+
+        
+        have h3 : f tstarC 4 = 2 := by
+            have : (4 : Fin 5) ∈ ({3, 4} : Finset (Fin 5)) := by decide
+            rw [h_side_compl] at this
+            simpa using this
+        have h3N : f t2V3 4 = 2 := by
+          by_contra hp
+          rw [← h3] at hp
+          have hp_div := hMid tstar
+          simp [groupbeneficialDirectStep, hsucc] at hp_div
+          have h_is_div : 4 ∈ deviators (f tstarC) (f t2V3) := by 
+            simp [deviators] 
+            intro hkl
+            symm at hkl
+            exact hp hkl
+          have hp_div_app := (hp_div.right 4 h_is_div) 
+          have hp_div_app_left := hp_div_app.left
+          have hp_div_app_right := hp_div_app.right
+          rw [hk] at hp_div_app_right
+          simp [tstarC] at hM
+          simp [← hp_div_app_right, hM, dummyProfile ,rankingFromVector, toFunc, Vector.get, prefers] at hp_div_app_left
+        simp [h3N] at hk
+
+      have hmq := Finset.card_le_card h_divs
+      simp at hmq
+      have hpAt : ∀ i ∈ ({3, 4} : Finset (Fin 5)),  f tstarC i = 2 := by
+            intro i hi
+            have : (i : Fin 5) ∈ ({3, 4} : Finset (Fin 5)) :=  hi
+            rw [h_side_compl] at this
+            simpa using this
+      have h3N : ∀ i ∈ ({3, 4} : Finset (Fin 5)), f t2V3 i = 2 := by
+          intro i hi
+          by_contra hp
+          rw [← hpAt i hi ] at hp
+          have hp_div := hMid tstar
+          simp [groupbeneficialDirectStep, hsucc] at hp_div
+          have h_is_div : i ∈ deviators (f tstarC) (f t2V3) := by 
+            simp [deviators] 
+            intro hkl
+            symm at hkl
+            exact hp hkl
+          have hp_div_app := (hp_div.right i h_is_div) 
+          have hp_div_app_left := hp_div_app.left
+          simp [tstarC] at hM
+          fin_cases i <;>  simp at hi <;> simp [hPVatT2,hM, dummyProfile ,rankingFromVector, toFunc, Vector.get, prefers] at hp_div_app_left
+      
+      have hcard : (Finset.univ.filter (fun k => f tstarC k = 2)).card ≥ 2 := by
+          apply le_trans (b := ({3, 4} : Finset (Fin 5)).card)
+          · decide
+          · apply Finset.card_le_card
+            intro x hx
+            simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+            simp [h_side_compl] at hx
+            exact hx
+
+      simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
+        ScoringRule.candScore,scoreWinners,NonEmptyFinset.lexMin, Finset.min'_eq_iff] at hPVatT2
+      have hL1 := hPVatT2
+
+  
+
 
 
 

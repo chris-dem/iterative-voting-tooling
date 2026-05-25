@@ -13,6 +13,7 @@ structure NonEmptyFinset (α : Type*) where
 
 /-- Tie-break by choosing the lex-smallest winner (F;in m has a natural linear order). -/
 def NonEmptyFinset.lexMin {m : ℕ} (s : NonEmptyFinset (Cand m)) (L: LinearOrder (Fin m)) : Cand m :=
+  letI := L
   s.val.min' s.nonempty
 
 
