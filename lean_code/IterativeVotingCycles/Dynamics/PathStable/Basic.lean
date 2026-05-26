@@ -94,17 +94,14 @@ lemma direct_sub_beneficial (P: Profile n m) (VR: CandidateVotes n m -> Fin m):
       exact hr.left
 
 
-abbrev DynamicType := (P : Profile n m) ->  (VR: BallotProfile Ballot n -> Fin m) ->
-  (V V' : BallotProfile Ballot n ) -> Prop
 
-
-
-def is_path_stable_general_vr {k : ℕ} 
+def is_path_stable_general_vr  {k: ℕ} [NeZero n] [NeZero m]
     (P : Profile n m) (VR: BallotProfile Ballot n -> Fin m) 
     (f: Fin (k + 1) → BallotProfile Ballot n)
-    (dyn : DynamicType): Prop :=
-  (∀ i : Fin k, Dynamicn P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧ 
-  ∀  P VR (f supFinK)
+    (dyn : StepDynamic (n := n) (m := m) (Ballot := Ballot)): Prop :=
+  (∀ i : Fin k, dyn.step P VR (f (i.castSucc)) (f (i.addNat 1) )) ∧ 
+  ∀ V', ¬ dyn.step P VR (f supFinK) V'
+  
 
 def exists_path_vr_rule_condition_from_f0 (k : ℕ) (V0 : BallotProfile Ballot n) : Prop := 
   ∃ (P : Profile n m) (VR : BallotProfile Ballot n → Fin m)

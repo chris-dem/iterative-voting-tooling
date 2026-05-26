@@ -67,12 +67,23 @@ instance (P : Profile n m) (VR: CandidateVotes n m -> Fin m) (V V' : CandidateVo
   unfold groupbeneficialDirectStep deviators
   infer_instance
 
+def GroupBeneficialAndDirectDynamic : StepDynamic (n := n)  (m := m) (Ballot := CandidateBallot m):= ⟨groupbeneficialDirectStep, by 
+  simp [groupbeneficialDirectStep, groupbeneficialStep]; intro VR hq V V' hdq hud; 
+    have hud' :=  fun q => fun hq => (hud q hq).left;
+    exact And.intro hdq hud'⟩
+
 def groupbeneficialDirectRBStep (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m)
     : Prop :=
     let A := deviators V V'
     A.Nonempty ∧ (∀ u ∈ A , (prefers (P u).preference (VR V) (VR V') 
       ∧ (V' u).pos (VR V') = m - 1 -- Current winner is at the top of the ballot
       ∧ (V' u).pos (VR V ) = 0 )) -- Previous winner is at the bottom of the deviator ballot
+
+
+def GroupBeneficialAndDirectRDynamic : StepDynamic (n := n)  (m := m) (Ballot := RankingBallot m):= ⟨groupbeneficialDirectRBStep, by 
+  simp [groupbeneficialDirectRBStep, groupbeneficialStep]; intro VR hq V V' hdq hud; 
+    have hud' :=  fun q => fun hq => (hud q hq).left;
+    exact And.intro hdq hud'⟩ 
 
 def groupbeneficialTBStep (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n m)
     : Prop :=
@@ -86,3 +97,9 @@ instance (P: Profile n m) (VR: RankingVotes n m -> Fin m) (V V' : RankingVotes n
     Decidable (groupbeneficialDirectRBStep P VR V V') := by
   unfold groupbeneficialDirectRBStep deviators
   infer_instance 
+
+
+def GroupTopBottomRDynamic : StepDynamic (n := n)  (m := m) (Ballot := RankingBallot m):= ⟨groupbeneficialTBStep, by 
+  simp [groupbeneficialTBStep, groupbeneficialStep]; intro VR hq V V' hdq hud; 
+    have hud' :=  fun q => fun hq => (hud q hq).left;
+    exact And.intro hdq hud'⟩ 

@@ -24,14 +24,20 @@ instance instBordaScoring : ScoringRule (RankingBallot m) n m L where
     wv + CW c
 
 
-def bordaScore (L: LinearOrder (Fin m)) (P:  VoterW n)
+def bordaScore  (P:  VoterW n)
   (C: CandW m) (ballot : BallotProfile (RankingBallot m) n) (c : Cand m): WeightType :=
-    ScoringRule.candScore (self := instBordaScoring) L P C ballot c
+    ScoringRule.candScore (self := instBordaScoring) (inferInstance: LinearOrder (Fin m)) P C ballot c
 
 def bordaVoting (L: LinearOrder (Fin m)) (P:  VoterW n)
   (C: CandW m) (ballot : BallotProfile (RankingBallot m) n): Cand m :=  
     VotingRule.winner L 
       (self := instVotingRuleOfScoring (sr := instBordaScoring))
         P C ballot
+
+def unweightedBordaVoting (L: LinearOrder (Fin m)) (ballot : BallotProfile (RankingBallot m) n) : Cand m:=
+    bordaVoting L (fun _ => 1) (fun _ => 1) ballot
+
+def unweightedBordaScore (ballot : BallotProfile (RankingBallot m) n) (c : Cand m): WeightType:=
+    bordaScore (fun _ => 1) (fun _ => 1) ballot c
 
 end BordaVoting
