@@ -28,34 +28,93 @@ open Fin
 variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot] [Fintype Ballot]
 
+def rankingExtender (r : Ranking m) (m' : ℕ)  (h1 : NeZero m') (h2 : m < m'): Ranking m' :=
+  let f :=fun k => if h: k.val < m then (r.pos (k.castLT h)).castLE h2.le else k
+  let h : Function.Bijective f := by
+    constructor
+    simp [Function.Injective]
+    intro k1 k2 hfk
+    simp [f] at hfk
+    by_cases hk1 : k1.val < m <;> by_cases hk2 : k2.val < m <;> simp [hk1,hk2] at hfk
+    have hbij :=   r.bij.injective hfk
+    simp [Fin.ext_iff, ] at hbij
+    exact Fin.eq_of_val_eq hbij
+    simp [← hfk] at hk2
+    simp [hfk] at hk1
+    exact hfk
+    simp [Function.Surjective]
+    intro b
+    simp [f]
+    by_cases hk1 : b.val < m 
+
+    obtain ⟨a, hlt⟩ := r.bij.surjective (b.castLT hk1 )
+    use (a.castLE h2.le)
+    simp [hlt, a.isLt, Fin.castLE]
+    use b
+    simp [hk1]
+  ⟨f, h⟩ 
+
+def profilePadding (P : Profile n m) (m' : ℕ) (h1 : NeZero m')(h2 : m < m') : Profile n m' :=
+    fun (v : Voter n) => VoterProfile.mk  (rankingExtender (P v).preference m' h1 h2)
+
+def linearOrderPadder {m m' : ℕ} [NeZero m']
+    (L : LinearOrder (Fin m)) (h : m < m') : LinearOrder (Fin m') :=
+  { le           := sorry
+    le_total     := by sorry
+    decidableLE  := fun a b => by  -- explicit computable instance
+                      simp [myLe]; infer_instance
+    ..
+  }
+
+#check linearOrderPadder
 
 theorem uw_plurality_path_imp_uw_borda_path :
-  ∃ (c₁ d₁ c₂ d₂ : ℕ), 
+  ∃ (c₁: ℕ), 
     ∀ (k n m : ℕ) [NeZero n] [NeZero m] (hn_is_odd : Odd n) (P : Profile n m) (L : LinearOrder (Fin m)) 
       (pluralityPath : Fin (k + 1) → CandidateVotes n m),
-      is_path_stable_general_vr P (PV.unweightedPluralityVoting L) pluralityPath GroupBeneficialAndDirectDynamic ↔
-      ∃ (m' k' : ℕ)
+      is_path_stable_general_vr P (PV.unweightedPluralityVoting L) pluralityPath GroupBeneficialAndDirectDynamic →
+      ∃ (m' : ℕ)
         (hm_nezero : NeZero m') -- Added as a standard explicit variable
-        (hm : m' ≤ c₁ * m ^ d₁)
-        (hk : k' ≤ c₂ * k ^ d₂)
+        (hm : m' ≤ c₁ * n * m)
         (newProfile : Profile n m')
         (L' : LinearOrder (Fin m'))
-        (bordaPath : Fin (k' + 1) → RankingVotes n m'),
-        is_path_stable_general_vr newProfile (BordaVoting.unweightedBordaVoting L') bordaPath GroupTopBottomRDynamic :=
-sorry
+        (bordaPath : Fin (k + 1) → RankingVotes n m'),
+        is_path_stable_general_vr newProfile (BordaVoting.unweightedBordaVoting L') bordaPath GroupTopBottomRDynamic := by
+  use 3
+  intro k n m (h_is_ne_n) (h_is_ne_m) h_odd_n
+  intro P Lm pPath
+  intro hstable_upv
+  let c :=  2 * n * m + 1
+  use c
+  have h_c_ne_zero : NeZero c :=  by simp [c, NeZero.mk]
+  letI :=  h_c_ne_zero
+  use h_c_ne_zero
+  use (by 
+        simp [c]
+        simp only [Nat.mul_assoc, Nat.succ_mul  2, Nat.add_mul]
+        simp
+        constructor;
+        exact Nat.lt_of_succ_le (h_is_ne_n.one_le)
+        exact Nat.lt_of_succ_le (h_is_ne_m.one_le))
+  have h_c_gt_m : m < c:= by
+      simp [c]
+      nth_rw 1 [← Nat.one_mul m]
+      apply Nat.mul_le_mul_right m
+      have hs := h_is_ne_n.ne
+      omega
+
+  use (profilePadding P c h_c_ne_zero h_c_gt_m)
+  let L' : LinearOrder (Fin c) := linearOrderPadder Lm h_c_gt_m
 
 
-theorem uw_borda_path_imp_uw_plurality_path:
-  ∃ (c₁ d₁ c₂ d₂ : ℕ), 
-    ∀ (k n m : ℕ) [NeZero n] [NeZero m] (hn_is_odd : Odd n) (P : Profile n m) (L : LinearOrder (Fin m)) 
-      (bordaPath : Fin (k + 1) → RankingVotes n m),
-      is_path_stable_general_vr P (BordaVoting.unweightedBordaVoting L) bordaPath GroupTopBottomRDynamic →
-      ∃ (m' k' : ℕ)
-        (hm_nezero : NeZero m') -- Added as a standard explicit variable
-        (hm : m' ≤ c₁ * m ^ d₁)
-        (hk : k' ≤ c₂ * k ^ d₂)
-        (newProfile : Profile n m')
-        (L' : LinearOrder (Fin m'))
-        (pluralityPath : Fin (k' + 1) → CandidateVotes n m'),
-        is_path_stable_general_vr newProfile (PV.unweightedPluralityVoting L') pluralityPath GroupBeneficialAndDirectDynamic := 
-sorry
+-- theorem uw_borda_path_imp_uw_plurality_path:
+--   ∃ (c₁ d₁ c₂ d₂ : ℕ), 
+--     ∀ (k n m : ℕ) [NeZero n] [NeZero m] (hn_is_odd : Odd n) (P : Profile n m) (L : LinearOrder (Fin m)) 
+--       (bordaPath : Fin (k + 1) → RankingVotes n m),
+--         (hm_nezero : NeZero m') -- Added as a standard explicit variable
+--         (hm : m' ≤ c₁ * m ^ d₁)
+--         (newProfile : Profile n m')
+--         (L' : LinearOrder (Fin m'))
+--         (pluralityPath : Fin (k + 1) → CandidateVotes n m'),
+--         is_path_stable_general_vr newProfile (PV.unweightedPluralityVoting L') pluralityPath GroupBeneficialAndDirectDynamic := 
+-- sorry
