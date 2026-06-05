@@ -14,7 +14,7 @@ variable {n m: ℕ} [NeZero n] [NeZero m]
 -- Shared helper: build winner set from a score fn
 -- ────────────────────────────────────────────────
 
-def scoreWinners {Ballot : Type}
+@[simp] def scoreWinners {Ballot : Type}
     (score : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType)
     (P     : VoterW n)
     (CW    : CandW m)
@@ -33,10 +33,10 @@ def scoreWinners {Ballot : Type}
 
 /-- Assigns a numeric score to each candidate from submitted ballots alone.
     No voter-weight information; suitable for unweighted rules. -/
-class ScoringRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] (L: LinearOrder (Fin m)) where
+class ScoringRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] where
   candScore : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType
 
 instance (priority := 100) instVotingRuleOfScoring
-    [sr : ScoringRule Ballot n m L] : VotingRule Ballot n m L where
-  winners P CW BP := scoreWinners sr.candScore P CW  BP
+    [sr : ScoringRule Ballot n m]: VotingRule Ballot n m ord where
+  winners P CW BP := scoreWinners sr.candScore P CW BP
 

@@ -1,5 +1,6 @@
 import Mathlib.Tactic
 import Mathlib.Tactic.Contrapose
+import Mathlib.Order.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Max
@@ -21,7 +22,7 @@ import Mathlib.Analysis.Asymptotics.Lemmas
 
 
 open Asymptotics Filter
-open Classical
+open Classical LinearOrder
 open BigOperators
 open Fin
 
@@ -29,7 +30,7 @@ variable {n m : ℕ} [NeZero n] [NeZero m]
 variable {Ballot : Type} [DecidableEq Ballot] [Fintype Ballot]
 
 def rankingExtender (r : Ranking m) (m' : ℕ)  (h1 : NeZero m') (h2 : m < m'): Ranking m' :=
-  let f :=fun k => if h: k.val < m then (r.pos (k.castLT h)).castLE h2.le else k
+  let f := fun k => if h: k.val < m then (r.pos (k.castLT h)).castLE h2.le else k
   let h : Function.Bijective f := by
     constructor
     simp [Function.Injective]
@@ -57,16 +58,29 @@ def rankingExtender (r : Ranking m) (m' : ℕ)  (h1 : NeZero m') (h2 : m < m'): 
 def profilePadding (P : Profile n m) (m' : ℕ) (h1 : NeZero m')(h2 : m < m') : Profile n m' :=
     fun (v : Voter n) => VoterProfile.mk  (rankingExtender (P v).preference m' h1 h2)
 
-def linearOrderPadder {m m' : ℕ} [NeZero m']
-    (L : LinearOrder (Fin m)) (h : m < m') : LinearOrder (Fin m') :=
-  { le           := sorry
-    le_total     := by sorry
-    decidableLE  := fun a b => by  -- explicit computable instance
-                      simp [myLe]; infer_instance
-    ..
-  }
 
-#check linearOrderPadder
+@[reducible] def LinearOrder.extend {m m' : ℕ} [NeZero m']
+    (L : LinearOrder (Fin m)) (h1 : m < m') : LinearOrder (Fin m') :=
+  haveI : LinearOrder (Fin m) := L
+  LinearOrder.lift'
+    (fun a : Fin m' => toLex <|
+      if ha : a.val < m
+        then Sum.inl (⟨a.val, ha⟩ : Fin m)
+        else Sum.inr (⟨a.val - m, by omega⟩ : Fin (m' - m)))
+    (by
+      intro a b heq
+      simp only [toLex_inj] at heq
+      split_ifs at heq with ha hb
+      · exact Fin.eq_of_val_eq (Fin.mk.inj (Sum.inl.inj heq))
+      · simp at heq
+        omega)
+
+
+lemma LinearOrder.extend_lt {m m' : ℕ} [NeZero m'] (h : m < m') (L : LinearOrder (Fin m)) :
+    ∀ x y : Fin m, (L.extend h). (x.castLT (by omega)) (y.castLT (by omega)) = L.compare x y := by
+  letI : LinearOrder (Fin m) := L
+  letI : LinearOrder (Fin m') := L.extend h
+  intro x y
 
 theorem uw_plurality_path_imp_uw_borda_path :
   ∃ (c₁: ℕ), 
@@ -104,7 +118,7 @@ theorem uw_plurality_path_imp_uw_borda_path :
       omega
 
   use (profilePadding P c h_c_ne_zero h_c_gt_m)
-  let L' : LinearOrder (Fin c) := linearOrderPadder Lm h_c_gt_m
+  let L' : LinearOrder (Fin c) := Lm.extend h_c_gt_m
 
 
 -- theorem uw_borda_path_imp_uw_plurality_path:

@@ -12,9 +12,9 @@ import IterativeVotingCycles.Basic
 
 open Classical
 open BigOperators
-def toFunc {α: Type} {k : ℕ} (vc: Vector α k) : Fin k -> α :=  Vector.get vc
+@[simp] def toFunc {α: Type} {k : ℕ} (vc: Vector α k) : Fin k -> α :=  Vector.get vc
 
-def isUnique {α : Type}{n : ℕ} (vc: Vector α n): Prop := 
+@[simp] def isUnique {α : Type}{n : ℕ} (vc: Vector α n): Prop := 
   ∀ i j : Fin n, Vector.get vc i =  Vector.get vc j → i = j
 
 theorem is_unique_vec_n_n_bij_iff {n : ℕ} (vc: Vector (Fin n) n):
@@ -34,7 +34,7 @@ theorem is_unique_vec_n_n_bij_iff {n : ℕ} (vc: Vector (Fin n) n):
       rw [isUnique, ← Function.Injective]
       exact foo.left
 
-def rankingFromVector {m : ℕ} [NeZero m] 
+@[simp] def rankingFromVector {m : ℕ} [NeZero m] 
     (vc : Vector (Cand m) m) 
     (h : isUnique vc) : Ranking m where
   pos := toFunc vc

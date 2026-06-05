@@ -66,9 +66,10 @@ def voterCycle: Fin 6 -> CandidateVotes 3 4 := toFunc (Vector.ofFn ![
       toFunc (Vector.ofFn ![2 ,1, 1])
   ])
 
-abbrev linOrder :LinearOrder (Fin n) :=  inferInstance
+private abbrev linFin : OrderMapping m :=  ⟨id, 
+  by simp [Function.Bijective, Function.Injective, Function.Surjective]⟩ 
 
-def calcWinner := PV.pluralityVoting linOrder exVoterW weights
+def calcWinner := PV.pluralityVoting linFin exVoterW weights
 
 example : isSimpleCycle 6 (by omega) voters calcWinner voterCycle := by
   native_decide

@@ -1,3 +1,5 @@
+import Mathlib
+import Mathlib.Tactic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Data.Finset.Basic
@@ -18,32 +20,31 @@ open BigOperators
 
 variable {n m : ℕ} [NeZero n] [NeZero m]
 namespace PV
-instance instPluralityScoring : ScoringRule (CandidateBallot m) n m L where
+instance instPluralityScoring : ScoringRule (CandidateBallot m) n m where
   candScore P CW BP c := 
     let w := Finset.univ.filter (fun v => BP v = c)
     let wv := ∑ x ∈ w,  P x
     wv + CW c
 
 
-def pluralityScore (L: LinearOrder (Fin m)) (P:  VoterW n)
+def pluralityScore (P:  VoterW n)
   (C: CandW m) (ballot : BallotProfile (CandidateBallot m) n) (c : Cand m): WeightType :=  
-    ScoringRule.candScore (self := instPluralityScoring) L P C ballot c
+    ScoringRule.candScore (self := instPluralityScoring) P C ballot c
 
-def pluralityVoting (L: LinearOrder (Fin m)) (P:  VoterW n)
+@[simp] def pluralityVoting (L :OrderMapping m) (P:  VoterW n)
   (C: CandW m) (ballot : BallotProfile (CandidateBallot m) n): Cand m :=  
     VotingRule.winner L 
       (self := instVotingRuleOfScoring (sr := instPluralityScoring))
         P C ballot
 
 
-def unweightedPluralityScore (L: LinearOrder (Fin m)) 
+@[simp] def unweightedPluralityScore 
   (ballot : BallotProfile (CandidateBallot m) n) (c : Cand m) : WeightType :=
-    pluralityScore L (fun _ => 1) (fun _ => 0) ballot c
+    pluralityScore (fun _ => 1) (fun _ => 0) ballot c
 
-def unweightedPluralityVoting (L: LinearOrder (Fin m)) 
+@[simp] def unweightedPluralityVoting (L :OrderMapping m)
   (ballot : BallotProfile (CandidateBallot m) n)  : Cand m :=
     pluralityVoting L (fun _ => 1) (fun _ => 0) ballot
-
 end PV
 
 
@@ -62,12 +63,17 @@ private def exBallots : BallotProfile (CandidateBallot 2) 3
 -- No candidate base scores
 private def exCandW : Cand 2 → WeightType := fun _ => 0
 
-private abbrev linFin := (inferInstance : LinearOrder (Fin 2))
+private abbrev linFin : OrderMapping m :=  ⟨{
+    toFun := id,
+    invFun := id,
+    left_inv := by grind,
+    right_inv := by grind,
+  }⟩ 
 
 -- Score for candidate 0: weight(v0) + weight(v1) = 1 + 2 = 3
 -- Score for candidate 1: weight(v2)              = 3
-#eval PV.pluralityScore linFin exVoterW exCandW exBallots ⟨0, by omega⟩ -- 3
-#eval PV.pluralityScore linFin exVoterW exCandW exBallots ⟨1, by omega⟩ -- 3
+#eval PV.pluralityScore exVoterW exCandW exBallots ⟨0, by omega⟩ -- 3
+#eval PV.pluralityScore exVoterW exCandW exBallots ⟨1, by omega⟩ -- 3
 
 -- Winners (both candidates tie)
 private def my_winners : Finset (Fin 2) := (VotingRule.winners  linFin exVoterW exCandW exBallots).val 

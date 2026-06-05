@@ -16,7 +16,7 @@ import IterativeVotingCycles.Misc
 import IterativeVotingCycles.Dynamics.Step
 import IterativeVotingCycles.Dynamics.PathStable.Basic
 
-open Classical
+open Classical PV
 open BigOperators
 open Fin
 
@@ -40,7 +40,8 @@ private def exBallots : BallotProfile (CandidateBallot 3) 5
   | ⟨3, _⟩ => ⟨0, by omega⟩
   | ⟨4, _⟩ => ⟨1, by omega⟩
 
-private abbrev linFin := (inferInstance : LinearOrder (Fin 3))
+
+private abbrev linFin : OrderMapping 3 :=  ⟨id,  by simp [Function.Bijective, Function.Injective, Function.Surjective]⟩ 
 
 #eval PV.unweightedPluralityVoting linFin exBallots
 #eval PV.unweightedPluralityVoting linFin (toFunc (Vector.ofFn ![
@@ -73,7 +74,7 @@ theorem condorcet_unique (P : RankingVotes n m) (c₁ c₂ : Cand m)
 
 
 
-theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOrder (Cand m)) :
+theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMapping  m) :
     ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c → 
       (∃ VP, isStableState P (PV.unweightedPluralityVoting L) VP) := by
@@ -83,7 +84,6 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOr
               have hvpF : ∀ v, vp v = c := by
                 intro v
                 simp [vp, toFunc]
-                apply Vector.getElem_replicate (v.isLt)
               use vp
               rw [isStableState]
               intro V'
@@ -92,15 +92,21 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : LinearOr
               obtain ⟨hAE, hnnA⟩  := hCContra
               obtain ⟨y, hAE⟩ := hAE
               have hLvp : PV.unweightedPluralityVoting L vp = c := by
-                simp [PV.unweightedPluralityVoting, PV.pluralityVoting,
-                VotingRule.winner, scoreWinners, ScoringRule.candScore, NonEmptyFinset.lexMin]
-                simp [Finset.min'_eq_iff]
+                simp [VotingRule.winner, Finset.min'_eq_iff, ScoringRule.candScore]
                 constructor
-                intro d
-                simp [hvpF]
-                by_cases hcd: c = d
-                simp [hcd]
-                simp [hcd]
+                · obtain ⟨a, ha⟩  :=  L.bij.surjective c
+                  use a
+                  rw [and_comm]
+                  constructor
+                  · grind
+                  · intro d
+                    by_cases hcd: c = d
+                    · rw [← hcd]
+                      simp [hvpF]
+                      
+
+
+                    · simp [hcd]
                 intro b hd
                 simp [hvpF] at hd
                 by_cases hcb: c = b
