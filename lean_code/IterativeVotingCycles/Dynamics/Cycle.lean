@@ -66,8 +66,10 @@ def voterCycle: Fin 6 -> CandidateVotes 3 4 := toFunc (Vector.ofFn ![
       toFunc (Vector.ofFn ![2 ,1, 1])
   ])
 
-private abbrev linFin : OrderMapping m :=  ⟨id, 
-  by simp [Function.Bijective, Function.Injective, Function.Surjective]⟩ 
+private abbrev linFin : OrderMapping m :=  ⟨{
+    toFun := id,
+    invFun := id,
+  }⟩ 
 
 def calcWinner := PV.pluralityVoting linFin exVoterW weights
 

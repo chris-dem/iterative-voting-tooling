@@ -27,7 +27,7 @@ instance instPluralityScoring : ScoringRule (CandidateBallot m) n m where
     wv + CW c
 
 
-def pluralityScore (P:  VoterW n)
+@[simp] def pluralityScore (P:  VoterW n)
   (C: CandW m) (ballot : BallotProfile (CandidateBallot m) n) (c : Cand m): WeightType :=  
     ScoringRule.candScore (self := instPluralityScoring) P C ballot c
 

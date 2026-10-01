@@ -47,7 +47,7 @@ structure OrderMapping (m: ℕ) where
     }⟩ 
 
 
-@[simp] def OrderFromVector {m : ℕ} [NeZero m] 
+@[simp] def OrderMapping.fromVector {m : ℕ} [NeZero m] 
     (vc : Vector (Cand m) m) 
     (h : isUnique vc) : OrderMapping m := 
 

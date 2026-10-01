@@ -34,7 +34,7 @@ variable {n m: ℕ} [NeZero n] [NeZero m]
 /-- Assigns a numeric score to each candidate from submitted ballots alone.
     No voter-weight information; suitable for unweighted rules. -/
 class ScoringRule (Ballot : Type) (n m : ℕ) [NeZero n] [NeZero m] where
-  candScore : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType
+   candScore : VoterW n -> CandW m -> BallotProfile Ballot n → Cand m → WeightType
 
 instance (priority := 100) instVotingRuleOfScoring
     [sr : ScoringRule Ballot n m]: VotingRule Ballot n m ord where

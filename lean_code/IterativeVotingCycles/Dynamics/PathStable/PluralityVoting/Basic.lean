@@ -41,7 +41,7 @@ private def exBallots : BallotProfile (CandidateBallot 3) 5
   | ⟨4, _⟩ => ⟨1, by omega⟩
 
 
-private abbrev linFin : OrderMapping 3 :=  ⟨id,  by simp [Function.Bijective, Function.Injective, Function.Surjective]⟩ 
+private abbrev linFin : OrderMapping 3 :=  OrderMapping.mk ⟨id,  id, by grind, by grind⟩ 
 
 #eval PV.unweightedPluralityVoting linFin exBallots
 #eval PV.unweightedPluralityVoting linFin (toFunc (Vector.ofFn ![
@@ -71,9 +71,6 @@ theorem condorcet_unique (P : RankingVotes n m) (c₁ c₂ : Cand m)
     (h₁ : condorcetWinner P c₁) (h₂ : condorcetWinner P c₂) : c₁ = c₂ := by
   sorry
 
-
-
-
 theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMapping  m) :
     ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c → 
@@ -88,33 +85,24 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
               rw [isStableState]
               intro V'
               by_contra hCContra
-              simp [groupbeneficialStep] at hCContra
+              simp only [groupbeneficialStep] at hCContra
               obtain ⟨hAE, hnnA⟩  := hCContra
               obtain ⟨y, hAE⟩ := hAE
               have hLvp : PV.unweightedPluralityVoting L vp = c := by
-                simp [VotingRule.winner, Finset.min'_eq_iff, ScoringRule.candScore]
+                simp [VotingRule.winner, ScoringRule.candScore,
+                  Equiv.symm_apply_eq, Finset.min'_eq_iff]
                 constructor
-                · obtain ⟨a, ha⟩  :=  L.bij.surjective c
-                  use a
-                  rw [and_comm]
-                  constructor
-                  · grind
-                  · intro d
-                    by_cases hcd: c = d
-                    · rw [← hcd]
-                      simp [hvpF]
-                      
-
-
-                    · simp [hcd]
-                intro b hd
-                simp [hvpF] at hd
-                by_cases hcb: c = b
-                simp [hcb]
-                simp [hcb] at hd
-                have hne := Finset.univ_nonempty (α := Voter n)
-                simp [hd] at hne
-              
+                · -- C is the candidate with the most votes
+                  intro d 
+                  simp [hvpF]
+                  by_cases hdc : c = d <;> simp [hdc]
+                · -- Any other majority voter will be at ranked less than c
+                  intro b hd
+                  simp [hvpF] at hd
+                  have hdc := hd c
+                  simp at hdc
+                  by_cases hbc : c = b <;> simp [hbc] at hdc; simp [hbc]
+                  exact absurd hdc (NeZero.ne n)
               rcases m with _ | _ | mq
               -- Zero
               exact absurd rfl (NeZero.ne 0)
@@ -129,9 +117,11 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
               rw [hpp, hO1] at hnnAA2
               simp [prefers] at hnnAA2
               -- 2 <=
-              by_cases hVnew : PV.unweightedPluralityVoting L V' = c
-              have hnbb := hnnA y hAE
-              simp [hLvp,hVnew,prefers]  at hnbb
+              have hVnew : ¬ PV.unweightedPluralityVoting L V' =c := by
+                intro h
+                have hnbb := hnnA y hAE
+                simp only [prefers, h, hLvp]  at hnbb
+                simp  at hnbb
               have hn1: ∃ p : Cand (mq + 2),  p ≠ c ∧ PV.unweightedPluralityVoting L V' = p := by
                 have had2 : ∃ q, PV.unweightedPluralityVoting L V'  = q := by
                   refine ⟨ PV.unweightedPluralityVoting L V', rfl ⟩ 
@@ -145,15 +135,15 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
                 exact hqE
               obtain  ⟨q, hq, hnn⟩ := hn1
               have hqQ := hp q hq
-              have hAllEqC : ∀ v,  ((¬ v = c) →  PV.unweightedPluralityScore L vp v = 0)
-                  ∧ ((v = c) →  PV.unweightedPluralityScore L vp v = n) := by
+              have hAllEqC : ∀ v,  ((¬ v = c) →  PV.unweightedPluralityScore vp v = 0)
+                  ∧ ((v = c) →  PV.unweightedPluralityScore vp v = n) := by
                     intro v
                     constructor
                     intro h
                     simp [PV.unweightedPluralityScore,PV.pluralityScore, ScoringRule.candScore]
                     intro x
                     intro hmm2
-                    simp [vp, toFunc, Vector.get] at hmm2
+                    simp [vp] at hmm2
                     symm at hmm2
                     exact h hmm2
                     intro h
@@ -161,14 +151,20 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
                     ,hvpF]
                     symm at h
                     simp [h]
-              have hAllEqCq : PV.unweightedPluralityScore L vp q = 0 := by
+              have hAllEqCq : PV.unweightedPluralityScore vp q = 0 := by
                 have h1 := hAllEqC q
-                simp [h1.left hq]
-              have hAllEqCc : PV.unweightedPluralityScore L vp c = n := by
+                simp [ScoringRule.candScore] at h1
+                symm at hq
+                simp [ScoringRule.candScore, hvpF,hq]
+
+              have hAllEqCc : PV.unweightedPluralityScore vp c = n := by
                 have h1 := hAllEqC c
-                simp [h1.right]
+                simp [ScoringRule.candScore] at h1
+                simp [h1, ScoringRule.candScore]
+
               set A :=  deviators vp V'
-              have hV'cScore : PV.unweightedPluralityScore L V' c = n - A.card  := by
+
+              have hV'cScore : PV.unweightedPluralityScore V' c = n - A.card  := by
                 simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
                 rw [← Finset.filter_union_filter_not_eq (fun v => v ∈ A) ({v | V' v = c})]
                 rw [Finset.card_union_of_disjoint (s:= {v ∈ {v | V' v = c} | v ∈ A}) 
@@ -214,8 +210,8 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
                 rw [← h, hinA2]
                 rw [show ({a | a ∉ A} : Finset (Fin n)) = Aᶜ by
                   ext a <;> simp] 
-              have hV'qScore: PV.unweightedPluralityScore L V' q ≤ A.card := by
-                simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
+              have hV'qScore: PV.unweightedPluralityScore V' q ≤ A.card := by
+                simp [ScoringRule.candScore]
                 have hSubVAll : Finset.univ.filter (fun v => V' v = q) ⊆  Finset.univ.filter (fun v => v ∈ A) := by
                   intro v hv
                   simp
@@ -258,12 +254,11 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
                 rw [← FSAnti, Finset.card_compl, Fintype.card_fin] at hqQ
                 omega
 
-              have hPVV'c : PV.unweightedPluralityScore L V' c ≤ PV.unweightedPluralityScore L V' q 
+              have hPVV'c : PV.unweightedPluralityScore V' c ≤ PV.unweightedPluralityScore V' q 
                 := by
-                  simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-                  scoreWinners,NonEmptyFinset.lexMin, ScoringRule.candScore, Finset.min'_eq_iff] 
+                  simp [Equiv.symm_apply_eq, VotingRule.winner, NonEmptyFinset.lexMin, ScoringRule.candScore, Finset.min'_eq_iff] 
                     at hnn
-                  simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
+                  simp [ScoringRule.candScore]
                   exact hnn.left c
               rw [Nat.le_iff_lt_or_eq] at hPVV'c
               rcases hPVV'c with hPvvL | hPvvR
@@ -313,12 +308,14 @@ theorem unweighted_pv_condorcet_imp_exist_stable (P : Profile n m) (L : OrderMap
 
 
 
-lemma unweighted_score_closure (L : LinearOrder (Cand m)) (V: CandidateVotes n  m) : ∑v, PV.unweightedPluralityScore L V v = n := by
+
+
+lemma unweighted_score_closure (V: CandidateVotes n  m) : ∑v, PV.unweightedPluralityScore V v = n := by
   simp  [PV.unweightedPluralityScore, PV.pluralityScore,ScoringRule.candScore]
   simp [Finset.sum_card_fiberwise_eq_card_filter]
 
 
-theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : LinearOrder (Cand m)):
+theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : OrderMapping m):
   ∀ c : Cand m, 
         condorcetWinner (fun v => (P v).preference) c →
               (∀ VP : CandidateVotes n m, isStableState P (PV.unweightedPluralityVoting L) VP -> 
@@ -385,13 +382,12 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
 
     let A := deviators VP Vnew
     have hpVP' := hpVP
-    simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-      NonEmptyFinset.lexMin,scoreWinners, Finset.exists_min_image, ScoringRule.candScore,Finset.min'_eq_iff] at hpVP
+    simp [ScoringRule.candScore, VotingRule.winner,NonEmptyFinset.lexMin,Finset.min'_eq_iff, Equiv.symm_apply_eq] at hpVP
     obtain ⟨hpCardSmall, _⟩ := hpVP
     have h1CVP := hpCardSmall c
 
-    have hVP_le_cp : PV.unweightedPluralityScore L VP c ≤ PV.unweightedPluralityScore L VP p := by
-      simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
+    have hVP_le_cp : PV.unweightedPluralityScore VP c ≤ PV.unweightedPluralityScore VP p := by
+      simp [ScoringRule.candScore]
       exact hpCardSmall c
 
     have hLe2: (Finset.univ.filter (fun v => VP v = c)).card  ≤ n / 2:= by
@@ -401,7 +397,7 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
         , (Finset.univ.filter (fun v => VP v = k)).card  := by
         apply Finset.sum_le_sum_of_subset
         simp
-      have hTotSum := unweighted_score_closure L VP
+      have hTotSum := unweighted_score_closure VP
       simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hTotSum
       simp [hTotSum, Finset.sum_pair (hNEpc)] at hLeCP
       have h1 : 2 * (Finset.univ.filter (fun v => VP v = c) |> Finset.card) ≤ n :=  by
@@ -441,7 +437,7 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
     intro y hDiv
     simp [deviators] at hDiv
     rw [hpVP']
-    have hcompVnew : ∀ q, q ≠ c → PV.unweightedPluralityScore L Vnew q < PV.unweightedPluralityScore L Vnew c := by
+    have hcompVnew : ∀ q, q ≠ c → PV.unweightedPluralityScore Vnew q < PV.unweightedPluralityScore Vnew c := by
         intro q hqNEc
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
         by_contra hContra
@@ -450,7 +446,7 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
         , (Finset.univ.filter (fun v => Vnew v = k)).card  := by
           apply Finset.sum_le_sum_of_subset
           simp
-        have hTotSum := unweighted_score_closure L Vnew
+        have hTotSum := unweighted_score_closure Vnew
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hTotSum
         simp [hTotSum, Finset.sum_pair (hqNEc)] at hLeCP
         have h1 : 2 * (Finset.univ.filter (fun v => Vnew v = c) |> Finset.card) ≤ n :=  by
@@ -462,8 +458,8 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
         exact absurd (h1) (by omega)
 
     have hVnewW : PV.unweightedPluralityVoting L Vnew = c := by
-      simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-        scoreWinners, NonEmptyFinset.lexMin, Finset.min'_eq_iff, ScoringRule.candScore]
+      simp [VotingRule.winner, NonEmptyFinset.lexMin, Finset.min'_eq_iff,
+        ScoringRule.candScore, Equiv.symm_apply_eq]
       constructor
       intro d
       by_cases hCases : d = c
@@ -484,9 +480,7 @@ theorem unweighted_pv_condorcet_imp_all_stable_cond_wins  (P: Profile n m) (L : 
     exact hDiv.left
 
 
-
-
-theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m))
+theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : OrderMapping m)
   (VP : CandidateVotes n m) (h : Odd n) :
           isStableState P (PV.unweightedPluralityVoting L) VP →
       condorcetWinner (fun v => (P v).preference)  (PV.unweightedPluralityVoting L VP)
@@ -505,7 +499,7 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
       else
         VP v
       use Vnew
-      simp [groupbeneficialStep]
+      simp only [groupbeneficialStep]
       
 
       have hUnion : Finset.univ.filter (fun v => prefers (P v).preference c p) ∪
@@ -535,7 +529,7 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
         , (Finset.univ.filter (fun v => VP v = k)).card  := by
         apply Finset.sum_le_sum_of_subset
         simp
-      have hTotSum := unweighted_score_closure L VP
+      have hTotSum := unweighted_score_closure VP
       simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hTotSum
       simp [hTotSum, Finset.sum_pair (hNEpc)] at hLeCP
         
@@ -560,7 +554,7 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
         apply Fin.le_of_lt at hv1
         exact hv1
 
-      have hVnewIne : n/2 < PV.unweightedPluralityScore L Vnew p  := by
+      have hVnewIne : n/2 < PV.unweightedPluralityScore Vnew p  := by
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]
         by_contra hC
         push Not at hC
@@ -579,7 +573,7 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
         omega
 
 
-      have hVComp : ∀ k, k ≠ p →  PV.unweightedPluralityScore  L Vnew k < PV.unweightedPluralityScore  L Vnew  p  := by
+      have hVComp : ∀ k, k ≠ p →  PV.unweightedPluralityScore  Vnew k < PV.unweightedPluralityScore  Vnew  p  := by
         intro k hNEkp
         by_contra h
         push Not at h
@@ -588,7 +582,7 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
           , (Finset.univ.filter (fun v => Vnew v = k)).card  := by
           apply Finset.sum_le_sum_of_subset
           simp
-        have hTotSum := unweighted_score_closure L Vnew
+        have hTotSum := unweighted_score_closure Vnew
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hTotSum
         simp [hTotSum, Finset.sum_pair (hNEkp)] at hLeCP
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore]  at hVnewIne
@@ -605,8 +599,8 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
       simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at hVComp
 
       have hVnewT : PV.unweightedPluralityVoting L Vnew = p  := by
-        simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-        scoreWinners, NonEmptyFinset.lexMin, Finset.min'_eq_iff, ScoringRule.candScore]
+        simp [VotingRule.winner, Equiv.symm_apply_eq,
+          NonEmptyFinset.lexMin, Finset.min'_eq_iff, ScoringRule.candScore]
         constructor
         intro d
         by_cases hNEdp : d  = p
@@ -635,7 +629,8 @@ theorem unweighted_stable_n_is_odd_imp_condorcet (P : Profile n m) (L : LinearOr
       simp [deviators, Vnew] at hd
       exact hd.left
 
-theorem cor_unweighted_pv_condorcet_imp_exist_stable_direct (P : Profile n m) (L : LinearOrder (Cand m)) :
+theorem cor_unweighted_pv_condorcet_imp_exist_stable_direct (P : Profile n m)
+    (L : OrderMapping m) :
     ∀ c : Cand m, 
       condorcetWinner (fun v => (P v).preference) c → 
       (∃ VP, isDirectStableState P (PV.unweightedPluralityVoting L) VP)  := by
@@ -647,7 +642,8 @@ theorem cor_unweighted_pv_condorcet_imp_exist_stable_direct (P : Profile n m) (L
         use VP
 
 
-theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m) (L : LinearOrder (Cand m))
+theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m)
+  (L : OrderMapping m)
   (h : Odd n) :
           (∀ VP , isStableState P (PV.unweightedPluralityVoting L) VP →
            condorcetWinner (VoterProfile.preference ∘ P)  (PV.unweightedPluralityVoting L VP))
@@ -656,11 +652,12 @@ theorem cor_unweighted_stable_n_is_odd_imp_condorcet_corwinner (P : Profile n m)
 
 
 
-theorem unweighted_stable_n_is_even_imp_condorcet (P : Profile n m) (L : LinearOrder (Cand m)) -- TODO: Investigate the theorems accuracy
+theorem unweighted_stable_n_is_even_imp_condorcet (P : Profile n m)
+  (L : OrderMapping m) -- TODO: Investigate the theorems accuracy
   (VP : CandidateVotes n m) (h : Even n) :
           isStableState P (PV.unweightedPluralityVoting L) VP →
       ∃ c, condorcetWinner (VoterProfile.preference ∘ P) c ∨ 
-      ∀ d, (weakCondorcetWinner (VoterProfile.preference ∘ P) c ∧ L.lt c d) := by
+      ∀ d, (weakCondorcetWinner (VoterProfile.preference ∘ P) c ∧  L.pos c < L.pos d) := by
       sorry
 
 

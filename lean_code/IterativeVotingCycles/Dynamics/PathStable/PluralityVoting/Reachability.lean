@@ -1,3 +1,4 @@
+import Mathlib
 import Mathlib.Tactic
 import Mathlib.Tactic.Contrapose
 import Mathlib.Data.Fin.Basic
@@ -46,10 +47,7 @@ private def exBallots : BallotProfile (CandidateBallot 3) 5
   | ⟨3, _⟩ => ⟨2, by omega⟩
   | ⟨4, _⟩ => ⟨2, by omega⟩
 
-private abbrev linFin : LinearOrder (Fin 3)ᵒᵈ := inferInstance
-private abbrev linFin' : LinearOrder (Fin 3) := linFin
-
-#eval linFin'.lt  2 0
+private def linFin' := OrderMapping.fromVector (Vector.ofFn ![2,1,0]) (by proveUnique)
 
 private lemma c_is_condorcet: condorcetWinner (VoterProfile.preference ∘ dummyProfile) 0 := by
   native_decide
@@ -93,7 +91,7 @@ private lemma unreachable_from_truth (k : ℕ):
             <;> rw [deviators,hNext] at h2InDiv
             <;> exact absurd h2InDiv hk)
             simp [deviators, hNext, hk] at h2InDiv
-          
+
       have hExistsV2 : ∃ t1, ((f t1) 2 = 1)  ∧  ∀ t',  (t1 < t') → (f t') 2 = 0 := by
         let A := Finset.univ.filter (fun n => (f n) 2 = 1) 
         have hAnE : A.Nonempty := by
@@ -364,12 +362,12 @@ private lemma unreachable_from_truth (k : ℕ):
 
         have hSubCard := Finset.card_le_card hSub
         simp at hSubCard
-        have ht1Winner : ∃ c , PV.unweightedPluralityScore linFin' (f t1V2) 2 < PV.unweightedPluralityScore linFin' (f t1V2) c := by
+        have ht1Winner : ∃ c , PV.unweightedPluralityScore (f t1V2) 2 < PV.unweightedPluralityScore (f t1V2) c := by
           by_contra h
           push Not at h
           simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at h
           have hp := fun c => (h c).trans hSubCard
-          have hTot := unweighted_score_closure linFin' (f t1V2)
+          have hTot := unweighted_score_closure (f t1V2)
           -- Using our hypo we have that
           have huBsum : (∑ c, (Finset.univ.filter (fun v => (f t1V2) v = c)).card) ≤ 3 := by
             have hle := Finset.sum_le_card_nsmul Finset.univ
@@ -382,8 +380,8 @@ private lemma unreachable_from_truth (k : ℕ):
           simp at huBsum
         simp [PV.unweightedPluralityScore, PV.pluralityScore, ScoringRule.candScore] at ht1Winner
         obtain ⟨winner, hvW⟩  := ht1Winner
-        simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
-        ScoringRule.candScore,scoreWinners,NonEmptyFinset.lexMin, Finset.min'_eq_iff] at hPVatT1
+        simp [VotingRule.winner,
+        ScoringRule.candScore, NonEmptyFinset.lexMin, Finset.min'_eq_iff, Equiv.symm_apply_eq] at hPVatT1
         have hl := hPVatT1.left winner
         exact absurd hl (Nat.not_le.mpr hvW)
       have hNEt20 : t2V3 ≠ 0 := by
@@ -405,14 +403,10 @@ private lemma unreachable_from_truth (k : ℕ):
       clear_value c
       fin_cases c
       symm at hcPVu
---      simp [PV.unweightedPluralityVoting, PV.pluralityVoting, VotingRule.winner,
---    scoreWinners, ScoringRule.candScore, NonEmptyFinset.lexMin,
---    Finset.min'_eq_iff]  at hcPVu
---    obtain ⟨hcPV, hcPVOrder⟩  := hcPVu
       have hNextStar := hMid tstar
-      simp [groupbeneficialDirectStep,hsucc] at hNextStar
+      simp only [groupbeneficialDirectStep] at hNextStar
       obtain ⟨h_deviator_tstar, h_dev_win_tstar⟩ :=  hNextStar
-      simp [tstarC, hcPVu, hPVatT2] at h_dev_win_tstar
+      simp only [tstarC, hcPVu, addNat_one] at h_dev_win_tstar
       -- So we know that the only deviator must be (0-index) v2 or v4
       -- We know that v2 cannot be deviating therefore it must only be v4
       -- But if A is winnig, it must be the case that at least 3 voters win
@@ -425,22 +419,33 @@ private lemma unreachable_from_truth (k : ℕ):
         intro h
         fin_cases v
         -- 0
-        simp at h
-        have h' := h_dev_win_tstar 0 h
-        simp [dummyProfile,toFunc, rankingFromVector, Vector.get, prefers] at h'
+        simp
+        simp only [Nat.reduceAdd, zero_eta, isValue, ← hsucc] at h
+        have h' := (h_dev_win_tstar 0 h).left
+        simp [dummyProfile, prefers, VotingRule.winner,
+          ScoringRule.candScore] at h'
+        apply Fin.lt_def.mp at h'
+        omega
         -- 1
-        simp at h
-        have h' := h_dev_win_tstar 1 h
-        simp [dummyProfile,toFunc, rankingFromVector, Vector.get, prefers] at h'
+        simp only [Nat.reduceAdd,  ← hsucc] at h
+        have h' := (h_dev_win_tstar 1 h).left
+        simp [dummyProfile, prefers, VotingRule.winner,
+          ScoringRule.candScore] at h'
+        apply Fin.lt_def.mp at h'
+        omega
         -- 2
         rcases Nat.le_iff_lt_or_eq.mp hle with h1 | h2
         simp [deviators, ht1R tstar.castSucc h1, ht1R t2V3 h_t1_is_lt_t2] at h
         have h1 := (Fin.val_eq_val t1V2 tstar.castSucc).mp h2
-        simp [tstarC,← h1, hPVatT1] at hcPVu
+        simp [tstarC,← h1, hPVatT1, Equiv.symm_apply_eq, VotingRule.winner, linFin',
+          ScoringRule.candScore, Vector.ofFn, List.idxOf] at hcPVu
+        grind
         -- 3
-        simp at h
+        simp only [Nat.reduceAdd, ← hsucc] at h
         have h_dev_3 := (h_dev_win_tstar 3 h).left
-        simp [prefers, dummyProfile, Vector.get, rankingFromVector, toFunc] at h_dev_3
+        simp [dummyProfile, prefers, VotingRule.winner,
+          ScoringRule.candScore] at h_dev_3
+        grind
         -- 4
         simp
         -- Other dir
@@ -451,12 +456,17 @@ private lemma unreachable_from_truth (k : ℕ):
         have hnext := h_dev_win_tstar q hq
         obtain ⟨h_pref, h_val⟩ := hnext
         fin_cases q
-        simp [prefers, dummyProfile, Vector.get, rankingFromVector, toFunc] at h_pref
-        simp [prefers, dummyProfile, Vector.get, rankingFromVector, toFunc] at h_pref
-        simp [ht1R t2V3 h_t1_is_lt_t2] at h_val
-        simp [ht2V] at h_val
-        simp [← h]at hq
-        exact hq
+        simp only [prefers, dummyProfile, toFunc, rankingFromVector, isValue,
+        Nat.reduceAdd, zero_eta, Vector.get_ofFn, Matrix.cons_val_zero,
+        PV.unweightedPluralityVoting, PV.pluralityVoting, 
+          ] at h_pref
+        set j : Fin 3 := (VotingRule.winner linFin' (fun x => 1) (fun x => 0) (f tstar.succ)) with hj
+        have h1 : ∀ i : Fin 3, (Vector.ofFn ![2,1,0]).get i ≤ 2 :=  by intro i; fin_cases i <;> simp
+        have h1p := h1 j
+        simp at h1p
+        exact absurd Fin.le_rfl (by )
+        
+
 
       -- Proof that A can only win if at least 3 voters vote
       have h_0_wins_iff_3 : ∀ VP : CandidateVotes 5 3,
